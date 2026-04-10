@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo \"No build step for api-gateway\""
+    "build": "cd ../.. && npm install && npm run build && cp -av dist services/api-gateway/dist"
   },
   "dependencies": {
     "cors": "^2.8.5",
