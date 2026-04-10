@@ -3,9 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "services/*"
-  ],
   "scripts": {
     "dev": "vite",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:services\"",

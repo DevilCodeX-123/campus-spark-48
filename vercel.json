@@ -2,9 +2,9 @@
   "version": 2,
   "name": "campusconnect",
   "framework": "vite",
-  "buildCommand": "npx vite build",
+  "buildCommand": "./node_modules/.bin/vite build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --ignore-scripts",
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
