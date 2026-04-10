@@ -1,0 +1,75 @@
+services:
+  # ── Frontend (Vite React SPA) ──────────────────────────────────────────
+  - type: web
+    name: campusconnect-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        sync: false   # Set this in the Render dashboard → Environment tab
+
+  # ── API Gateway ────────────────────────────────────────────────────────
+  - type: web
+    name: campusconnect-api-gateway
+    env: node
+    rootDir: services/api-gateway
+    buildCommand: npm install
+    startCommand: node index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+
+  # ── Auth Service ───────────────────────────────────────────────────────
+  - type: web
+    name: campusconnect-auth-service
+    env: node
+    rootDir: services/auth-service
+    buildCommand: npm install
+    startCommand: node index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGO_URI
+        sync: false   # Set this in the Render dashboard → Environment tab
+
+  # ── Event Service ──────────────────────────────────────────────────────
+  - type: web
+    name: campusconnect-event-service
+    env: node
+    rootDir: services/event-service
+    buildCommand: npm install
+    startCommand: node index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      - key: MONGO_URI
+        sync: false
+
+  # ── Registration Service ───────────────────────────────────────────────
+  - type: web
+    name: campusconnect-registration-service
+    env: node
+    rootDir: services/registration-service
+    buildCommand: npm install
+    startCommand: node index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3003
+      - key: MONGO_URI
+        sync: false
