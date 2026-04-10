@@ -1,20 +1,36 @@
 import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '@/utils/api';
 import DashboardLayout from '@/components/DashboardLayout';
 import StatCard from '@/components/StatCard';
-import { useAuth } from '@/context/AuthContext';
-import { mockUsers, mockEvents, mockRegistrations } from '@/data/mockData';
-import { Building2, Users, Calendar, UserPlus, BarChart3 } from 'lucide-react';
+import { Building2, Users, Calendar, BarChart3, UserPlus } from 'lucide-react';
 import { ROLE_LABELS } from '@/types';
 
 const CollegeAdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
-  const collegeId = user?.collegeId || 'c1';
-  const collegeStudents = mockUsers.filter(u => u.collegeId === collegeId && u.role === 'student');
-  const collegeEventHeads = mockUsers.filter(u => u.collegeId === collegeId && u.role === 'event_head');
-  const collegeEvents = mockEvents.filter(e => e.collegeId === collegeId);
-  const collegeRegistrations = mockRegistrations.filter(r => r.collegeId === collegeId);
+  const { data: students = [] } = useQuery({
+    queryKey: ['collegeStudents', user?.collegeId],
+    queryFn: async () => {
+      const res = await api.get(`/auth/users?collegeId=${user?.collegeId}&role=student`);
+      return res.data;
+    },
+    enabled: !!user?.collegeId
+  });
+
+  const { data: events = [] } = useQuery({
+    queryKey: ['collegeEvents', user?.collegeId],
+    queryFn: async () => {
+      const res = await api.get(`/events?collegeId=${user?.collegeId}`);
+      return res.data;
+    },
+    enabled: !!user?.collegeId
+  });
+
+  const collegeEventHeads = students.filter(u => u.role === 'event_head');
+  const collegeRegistrations = []; // Placeholder as per original structure
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <Building2 className="h-4 w-4" /> },

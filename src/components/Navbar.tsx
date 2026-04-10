@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
           <Link to="/events" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Events
           </Link>
-          {!isAuthenticated ? (
+          {!isAuthenticated || !user ? (
             <>
               <Link to="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                 Login
@@ -41,12 +41,12 @@ const Navbar: React.FC = () => {
           ) : (
             <>
               <Link
-                to={ROLE_ROUTES[user!.role]}
+                to={ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES] || '/'}
                 className="text-sm font-medium text-foreground"
               >
-                {ROLE_PANEL_NAMES[user!.role]}
+                {ROLE_PANEL_NAMES[user.role as keyof typeof ROLE_PANEL_NAMES] || 'Dashboard'}
               </Link>
-              <span className="text-sm text-muted-foreground">{user!.name}</span>
+              <span className="text-sm text-muted-foreground">{user.name}</span>
               <button onClick={handleLogout} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive">
                 <LogOut className="h-4 w-4" />
               </button>
@@ -63,14 +63,14 @@ const Navbar: React.FC = () => {
         <div className="border-t border-border bg-card px-4 py-4 md:hidden">
           <div className="flex flex-col gap-3">
             <Link to="/events" onClick={() => setMobileOpen(false)} className="text-sm text-muted-foreground">Events</Link>
-            {!isAuthenticated ? (
+            {!isAuthenticated || !user ? (
               <>
                 <Link to="/login" onClick={() => setMobileOpen(false)} className="text-sm text-muted-foreground">Login</Link>
                 <Link to="/signup" onClick={() => setMobileOpen(false)} className="text-sm text-primary font-medium">Sign Up</Link>
               </>
             ) : (
               <>
-                <Link to={ROLE_ROUTES[user!.role]} onClick={() => setMobileOpen(false)} className="text-sm font-medium">{ROLE_PANEL_NAMES[user!.role]}</Link>
+                <Link to={ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES] || '/'} onClick={() => setMobileOpen(false)} className="text-sm font-medium">{ROLE_PANEL_NAMES[user.role as keyof typeof ROLE_PANEL_NAMES] || 'Dashboard'}</Link>
                 <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="text-sm text-destructive text-left">Logout</button>
               </>
             )}

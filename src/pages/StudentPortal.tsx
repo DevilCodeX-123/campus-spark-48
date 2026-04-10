@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import QRCodeCard from '@/components/QRCodeCard';
 import { useAuth } from '@/context/AuthContext';
-import { mockEvents, mockRegistrations } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/utils/api';
+import { mockEvents } from '@/data/mockData';
 import { Calendar, Ticket, User, Search } from 'lucide-react';
 
 const StudentPortal: React.FC = () => {
@@ -11,7 +13,15 @@ const StudentPortal: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
-  const myRegistrations = mockRegistrations.filter(r => r.userId === (user?.id || 'u8'));
+  const { data: myRegistrations = [], isLoading } = useQuery({
+    queryKey: ['myRegistrations', user?.id],
+    queryFn: async () => {
+      const res = await api.get(`/register/user/${user?.id}`);
+      return res.data;
+    },
+    enabled: !!user?.id
+  });
+
   const registeredEventIds = myRegistrations.map(r => r.eventId);
 
   const filteredEvents = mockEvents.filter(e => {

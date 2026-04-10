@@ -1,40 +1,64 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { User, UserRole } from '@/types';
-import { mockUsers, mockColleges } from '@/data/mockData';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import type { User } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_ROUTES } from '@/types';
+import api from '@/utils/api';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  ownerLogin: (secretKey: string) => boolean;
+  token: string | null;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  ownerLogin: (secretKey: string) => Promise<boolean>;
   logout: () => void;
-  signup: (data: { name: string; email: string; password: string; collegeId: string }) => { success: boolean; error?: string };
+  signup: (data: any, type?: 'student' | 'college') => Promise<{ success: boolean; error?: string }>;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('cc_user');
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const login = useCallback((email: string, _password: string) => {
-    const found = mockUsers.find(u => u.email === email && u.isActive);
-    if (!found) return { success: false, error: 'Invalid credentials or account inactive' };
-    if (found.role === 'owner') return { success: false, error: 'Invalid credentials' };
-    setUser(found);
-    localStorage.setItem('cc_user', JSON.stringify(found));
-    return { success: true };
+  useEffect(() => {
+    const stored = localStorage.getItem('cc_user');
+    if (stored) {
+      const { user, token } = JSON.parse(stored);
+      setUser(user);
+      setToken(token);
+    }
+    setIsLoading(false);
   }, []);
 
-  const ownerLogin = useCallback((secretKey: string) => {
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user, token } = response.data;
+      setUser(user);
+      setToken(token);
+      localStorage.setItem('cc_user', JSON.stringify({ user, token }));
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.message || 'Login failed' };
+    }
+  }, []);
+
+  const ownerLogin = useCallback(async (secretKey: string) => {
     if (secretKey === 'ownerpass2024') {
-      const owner = mockUsers.find(u => u.role === 'owner')!;
-      setUser(owner);
-      localStorage.setItem('cc_user', JSON.stringify(owner));
+      const ownerUser: User = { 
+        id: 'owner', 
+        name: 'Platform Owner', 
+        email: 'owner@campusconnect.com',
+        role: 'owner',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+      setUser(ownerUser);
+      setToken(secretKey); // Use secret key as token for simplicity in owner routes
+      localStorage.setItem('cc_user', JSON.stringify({ user: ownerUser, token: secretKey, isOwner: true }));
       return true;
     }
     return false;
@@ -42,31 +66,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(() => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('cc_user');
-  }, []);
+    navigate('/login');
+  }, [navigate]);
 
-  const signup = useCallback((data: { name: string; email: string; password: string; collegeId: string }) => {
-    if (mockUsers.find(u => u.email === data.email)) {
-      return { success: false, error: 'Email already registered' };
+  const signup = useCallback(async (data: any, type: 'student' | 'college' = 'student') => {
+    try {
+      const endpoint = type === 'student' ? '/auth/register-student' : '/auth/register-college-admin';
+      const response = await api.post(endpoint, data);
+      
+      // If it was a student signup, log them in automatically
+      if (type === 'student') {
+        const { user, token } = response.data;
+        if (user && token) {
+          setUser(user);
+          setToken(token);
+          localStorage.setItem('cc_user', JSON.stringify({ user, token }));
+          return { success: true };
+        }
+      }
+      
+      // If it was a college admin request, tell them it was submitted
+      return { success: true };
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      return { success: false, error: err.response?.data?.message || 'Registration failed' };
     }
-    const college = mockColleges.find(c => c.id === data.collegeId);
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      role: 'student',
-      collegeId: data.collegeId,
-      college: college?.name || '',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    };
-    setUser(newUser);
-    localStorage.setItem('cc_user', JSON.stringify(newUser));
-    return { success: true };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, ownerLogin, logout, signup, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      login, 
+      ownerLogin, 
+      logout, 
+      signup, 
+      isAuthenticated: !!user,
+      isLoading
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -3,25 +3,32 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ROLE_ROUTES } from '@/types';
 import Navbar from '@/components/Navbar';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const result = login(email, password);
+    setIsLoading(true);
+    const result = await login(email, password);
+    setIsLoading(false);
+    
     if (result.success) {
+      toast.success('Login successful');
       const user = JSON.parse(localStorage.getItem('cc_user')!);
       navigate(ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES]);
     } else {
       setError(result.error || 'Login failed');
+      toast.error(result.error || 'Login failed');
     }
   };
 

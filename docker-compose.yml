@@ -1,0 +1,59 @@
+services:
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb+srv://db_admin:Devilboss8055@cluster0.5fpd5m6.mongodb.net/?appName=Cluster0
+      - JWT_SECRET=campusconnect_super_secret_2024
+      - OWNER_SECRET_KEY=ownerpass2024
+    restart: always
+
+  event-service:
+    build: ./services/event-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb+srv://db_admin:Devilboss8055@cluster0.5fpd5m6.mongodb.net/?appName=Cluster0
+      - JWT_SECRET=campusconnect_super_secret_2024
+    restart: always
+
+  registration-service:
+    build: ./services/registration-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb+srv://db_admin:Devilboss8055@cluster0.5fpd5m6.mongodb.net/?appName=Cluster0
+      - JWT_SECRET=campusconnect_super_secret_2024
+    restart: always
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - EVENT_SERVICE_URL=http://event-service:3002
+      - REG_SERVICE_URL=http://registration-service:3003
+    depends_on:
+      - auth-service
+      - event-service
+      - registration-service
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+      - VITE_SOCKET_URL=http://localhost:3003
+    depends_on:
+      - api-gateway
+    restart: always
