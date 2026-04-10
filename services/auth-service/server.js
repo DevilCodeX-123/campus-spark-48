@@ -26,9 +26,9 @@ app.get('/health', (req, res) => {
 const PORT = process.env.PORT || 3001;
 const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { dbName: 'campusconnect_auth' })
+mongoose.connect(MONGO_URI, { dbName: 'College_connect' })
   .then(() => {
-    console.log('✅ Auth Service connected to MongoDB database: campusconnect_auth');
+    console.log('✅ Auth Service connected to MongoDB database: College_connect');
     app.listen(PORT, () => console.log(`🚀 Auth Service running on port ${PORT}`));
   })
   .catch(err => {

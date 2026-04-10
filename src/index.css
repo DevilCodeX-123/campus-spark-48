@@ -158,4 +158,66 @@
   .dashboard-section {
     @apply rounded-xl bg-card border border-border p-6 shadow-sm;
   }
+
+  /* ── Sidebar Layout ── */
+  .admin-layout {
+    @apply flex min-h-screen;
+  }
+  .admin-sidebar {
+    @apply fixed inset-y-0 left-0 z-30 flex w-64 flex-col transition-transform duration-300;
+  }
+  .admin-main {
+    @apply ml-64 flex-1 min-h-screen overflow-auto;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 cursor-pointer;
+  }
+
+  /* ── Super Admin Dark Theme ── */
+  .admin-dark {
+    background: #090b10;
+    color: #f1f5f9;
+  }
+  .admin-dark-sidebar {
+    background: linear-gradient(180deg, #0f1117 0%, #0b0d14 100%);
+    border-right: 1px solid rgba(239,68,68,0.15);
+  }
+  .admin-dark-link {
+    @apply text-slate-400 hover:bg-red-500/10 hover:text-red-400;
+  }
+  .admin-dark-link-active {
+    @apply bg-red-500/15 text-red-400 border border-red-500/20;
+  }
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239,68,68,0.15), 0 0 40px rgba(239,68,68,0.05);
+  }
+
+  /* ── College Admin Blue Theme ── */
+  .college-sidebar {
+    background: #fff;
+    border-right: 1px solid #e2e8f0;
+  }
+  .college-link {
+    @apply text-slate-500 hover:bg-blue-50 hover:text-blue-700;
+  }
+  .college-link-active {
+    @apply bg-blue-600 text-white shadow-md shadow-blue-200;
+  }
+
+  /* ── Event Head Teal Theme ── */
+  .head-sidebar {
+    background: linear-gradient(180deg, #0d1f1e 0%, #0a1a19 100%);
+    border-right: 1px solid rgba(20,184,166,0.2);
+  }
+  .head-link {
+    @apply text-teal-300/70 hover:bg-teal-500/10 hover:text-teal-300;
+  }
+  .head-link-active {
+    @apply bg-teal-500/20 text-teal-300 border border-teal-500/30;
+  }
+
+  /* ── Event Assistant Yellow Theme ── */
+  .helper-card {
+    @apply rounded-2xl border border-yellow-100/80 bg-white p-5 shadow-sm dark:border-yellow-900/30 dark:bg-card;
+  }
 }

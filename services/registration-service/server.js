@@ -42,9 +42,9 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3003;
 const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { dbName: 'campusconnect_registrations' })
+mongoose.connect(MONGO_URI, { dbName: 'College_connect' })
   .then(() => {
-    console.log('✅ Registration Service connected to MongoDB database: campusconnect_registrations');
+    console.log('✅ Registration Service connected to MongoDB database: College_connect');
     httpServer.listen(PORT, () => console.log(`🚀 Registration Service running on port ${PORT}`));
   })
   .catch(err => {

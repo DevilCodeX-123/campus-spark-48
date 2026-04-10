@@ -10,12 +10,16 @@ const CollegeAdminSignup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const [form, setForm] = useState({
-    name: '', email: '', password: '', collegeName: '', collegeCity: '',
+    name: '', email: '', password: '', confirmPassword: '', collegeName: '', collegeCity: '',
     collegeWebsite: '', designation: '', idProofUrl: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.password !== form.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await signup(form, 'college');
@@ -82,10 +86,17 @@ const CollegeAdminSignup: React.FC = () => {
                 </div>
               </div>
               
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-foreground">Password</label>
-                <input type="password" value={form.password} onChange={e => update('password', e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" required minLength={6} placeholder="Min. 6 characters" />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-foreground">Password</label>
+                  <input type="password" value={form.password} onChange={e => update('password', e.target.value)}
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" required minLength={6} placeholder="Min. 6 characters" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-foreground">Confirm Password</label>
+                  <input type="password" value={form.confirmPassword} onChange={e => update('confirmPassword', e.target.value)}
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" required minLength={6} placeholder="Min. 6 characters" />
+                </div>
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">

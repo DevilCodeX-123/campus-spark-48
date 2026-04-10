@@ -12,8 +12,14 @@ const Login: React.FC = () => {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES] || '/');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,13 +38,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const demoAccounts = [
-    { email: 'sarah@campusconnect.com', role: 'Website Admin' },
-    { email: 'rajesh@iitd.ac.in', role: 'College Admin' },
-    { email: 'arjun@iitd.ac.in', role: 'Event Head' },
-    { email: 'rahul@iitd.ac.in', role: 'Helper' },
-    { email: 'ananya@iitd.ac.in', role: 'Student' },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,20 +85,6 @@ const Login: React.FC = () => {
               </button>
             </form>
 
-            <div className="mt-6 border-t border-border pt-4">
-              <p className="mb-3 text-xs font-medium text-muted-foreground">Quick Demo Login (click to fill)</p>
-              <div className="flex flex-wrap gap-2">
-                {demoAccounts.map(d => (
-                  <button
-                    key={d.email}
-                    onClick={() => { setEmail(d.email); setPassword('demo'); }}
-                    className="rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent"
-                  >
-                    {d.role}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Don't have an account? <Link to="/signup" className="font-medium text-primary hover:underline">Sign up</Link>

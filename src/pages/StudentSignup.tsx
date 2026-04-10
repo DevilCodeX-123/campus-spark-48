@@ -14,6 +14,7 @@ const StudentSignup = () => {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     collegeId: '',
     collegeName: '',
   });
@@ -46,6 +47,11 @@ const StudentSignup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
     if (!formData.collegeId) {
       toast.error('Please select your college');
       return;
@@ -125,6 +131,21 @@ const StudentSignup = () => {
                     type="password" 
                     value={formData.password} 
                     onChange={e => setFormData({...formData, password: e.target.value})}
+                    placeholder="••••••••"
+                    className="pl-10"
+                    required 
+                    minLength={6} 
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="mb-1 block">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="password" 
+                    value={formData.confirmPassword} 
+                    onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
                     placeholder="••••••••"
                     className="pl-10"
                     required 

@@ -46,7 +46,12 @@ router.get('/', async (req, res) => {
     const { collegeId, category, status } = req.query;
     let query = {};
     if (collegeId) query.collegeId = collegeId;
-    if (category) query.category = category;
+    
+    // Case-insensitive match for category to fix frontend filter discrepancies
+    if (category) {
+      query.category = { $regex: new RegExp(`^${category}$`, 'i') };
+    }
+    
     if (status) query.status = status;
 
     const events = await Event.find(query).sort({ date: 1 });

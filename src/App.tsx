@@ -16,15 +16,19 @@ import CollegeAdminDashboard from "./pages/CollegeAdminDashboard";
 import EventHeadDashboard from "./pages/EventHeadDashboard";
 import OrganizerHelperPanel from "./pages/OrganizerHelperPanel";
 import StudentPortal from "./pages/StudentPortal";
+import EventRegistrationPage from "./pages/EventRegistrationPage";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
@@ -32,18 +36,20 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<StudentSignup />} />
             <Route path="/register-college" element={<CollegeAdminSignup />} />
-            <Route path="/events" element={<EventsPage />} />
+            <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
             <Route path="/owner-access-9x72k" element={<OwnerPanel />} />
             <Route path="/admin" element={<RoleGuard allowedRoles={['website_admin']}><PlatformAdminDashboard /></RoleGuard>} />
             <Route path="/college-admin" element={<RoleGuard allowedRoles={['college_admin']}><CollegeAdminDashboard /></RoleGuard>} />
             <Route path="/event-head" element={<RoleGuard allowedRoles={['event_head']}><EventHeadDashboard /></RoleGuard>} />
             <Route path="/helper" element={<RoleGuard allowedRoles={['helper']}><OrganizerHelperPanel /></RoleGuard>} />
             <Route path="/student" element={<RoleGuard allowedRoles={['student']}><StudentPortal /></RoleGuard>} />
+            <Route path="/register-event/:eventId" element={<RoleGuard allowedRoles={['student']}><EventRegistrationPage /></RoleGuard>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

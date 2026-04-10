@@ -22,9 +22,9 @@ app.get('/health', (req, res) => {
 const PORT = process.env.PORT || 3002;
 const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { dbName: 'campusconnect_events' })
+mongoose.connect(MONGO_URI, { dbName: 'College_connect' })
   .then(() => {
-    console.log('✅ Event Service connected to MongoDB database: campusconnect_events');
+    console.log('✅ Event Service connected to MongoDB database: College_connect');
     app.listen(PORT, () => console.log(`🚀 Event Service running on port ${PORT}`));
   })
   .catch(err => {
