@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:services\"",
-    "dev:services": "concurrently \"npm run dev -w services/api-gateway\" \"npm run dev -w services/auth-service\" \"npm run dev -w services/event-service\" \"npm run dev -w services/registration-service\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:services\"",
+    "dev:frontend": "vite",
+    "dev:services": "node start-backend.js",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "start": "vite preview --host 0.0.0.0 --port $PORT",

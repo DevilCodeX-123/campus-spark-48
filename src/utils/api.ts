@@ -14,18 +14,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling
+// Response interceptor for error handling and auto-retry
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const message = error.response?.data?.message || 'Something went wrong';
+  async (error) => {
+    const { config, response } = error;
+    
+    // Auto-retry once if it's a network error (no response)
+    if (!response && !config._retry) {
+      config._retry = true;
+      console.warn('🔄 Backend unreachable. Retrying in 2 seconds...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return api(config);
+    }
+
+    const message = response?.data?.message || 'Something went wrong';
     
     // Don't show toast for 404s on optional data (like college list during loading)
-    if (error.response?.status !== 404) {
+    if (response?.status !== 404) {
       toast.error(message);
     }
 
-    if (error.response?.status === 401) {
+    if (response?.status === 401) {
       localStorage.removeItem('cc_user');
       window.location.href = '/login';
     }

@@ -6,18 +6,24 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import registrationRoutes from './routes/registrationRoutes.js';
 
-dotenv.config({ path: '../../.env' });
+import connectDB from './utils/db.js';
+
+mongoose.set('strictQuery', false);
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Pass io to routes
@@ -29,7 +35,11 @@ app.use((req, res, next) => {
 app.use('/register', registrationRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'Registration Service is running', db: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected' });
+  res.json({ 
+    status: 'Registration Service is running', 
+    db: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    readyState: mongoose.connection.readyState
+  });
 });
 
 io.on('connection', (socket) => {
@@ -40,14 +50,10 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3003;
-const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { dbName: 'College_connect' })
-  .then(() => {
-    console.log('✅ Registration Service connected to MongoDB database: College_connect');
-    httpServer.listen(PORT, () => console.log(`🚀 Registration Service running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('❌ Registration Service MongoDB connection error:', err);
-    process.exit(1);
-  });
+const start = async () => {
+  await connectDB();
+  httpServer.listen(PORT, () => console.log(`🚀 Registration Service running on port ${PORT}`));
+};
+
+start();

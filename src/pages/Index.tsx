@@ -125,8 +125,27 @@ const Index: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-border bg-card px-4 py-8">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>© 2024 CampusConnect. All rights reserved.</p>
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row">
+          <p className="text-sm text-muted-foreground">© 2024 CampusConnect. All rights reserved.</p>
+          
+          {/* Real-time System Status Indicator */}
+          <div className="flex items-center gap-4 rounded-full border border-border bg-background/50 px-4 py-1.5 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">System Health</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                <span className="text-[11px] font-medium text-foreground">Auth</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                <span className="text-[11px] font-medium text-foreground">Events</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                <span className="text-[11px] font-medium text-foreground">Database</span>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

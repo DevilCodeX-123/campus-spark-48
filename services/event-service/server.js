@@ -5,29 +5,34 @@ import dotenv from 'dotenv';
 import eventRoutes from './routes/eventRoutes.js';
 import budgetRoutes from './routes/budgetRoutes.js';
 
-dotenv.config({ path: '../../.env' });
+import connectDB from './utils/db.js';
+
+mongoose.set('strictQuery', false);
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  credentials: true
+}));
 app.use(express.json());
 
 app.use('/events', eventRoutes);
 app.use('/budget', budgetRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'Event Service is running', db: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected' });
+  res.json({ 
+    status: 'Event Service is running', 
+    db: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    readyState: mongoose.connection.readyState
+  });
 });
 
 const PORT = process.env.PORT || 3002;
-const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI, { dbName: 'College_connect' })
-  .then(() => {
-    console.log('✅ Event Service connected to MongoDB database: College_connect');
-    app.listen(PORT, () => console.log(`🚀 Event Service running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('❌ Event Service MongoDB connection error:', err);
-    process.exit(1);
-  });
+const start = async () => {
+  await connectDB();
+  app.listen(PORT, () => console.log(`🚀 Event Service running on port ${PORT}`));
+};
+
+start();

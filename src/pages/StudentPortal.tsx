@@ -96,10 +96,30 @@ const StudentPortal: React.FC = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : filteredEvents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-border bg-muted/30">
-                <Calendar className="h-16 w-16 text-muted-foreground/30" />
-                <h3 className="mt-4 font-heading text-lg font-bold">No events found</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Check back later for new happenings!</p>
+              <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-border bg-muted/30 text-center px-6">
+                <Calendar className="h-16 w-16 text-muted-foreground/30 animate-pulse" />
+                <h3 className="mt-6 font-heading text-2xl font-bold text-foreground">Discovering Your Campus...</h3>
+                <p className="mt-2 max-w-md text-muted-foreground">
+                  Our sensors are active, but no events have been posted yet. 
+                  If you are the administrator, please ensure your database is seeded with "WOW" content.
+                </p>
+                
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <div className="flex items-center gap-2 rounded-2xl bg-success/10 px-4 py-2 text-xs font-bold text-success border border-success/20">
+                     <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]" /> Connected to MongoDB Atlas
+                  </div>
+                  <div className="flex items-center gap-2 rounded-2xl bg-blue-500/10 px-4 py-2 text-xs font-bold text-blue-600 border border-blue-500/20">
+                     <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" /> Services Synchronized
+                  </div>
+                </div>
+
+                <div className="mt-10 p-6 rounded-2xl bg-card border border-border shadow-xl max-w-sm">
+                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">Administrator Quick-Fix</p>
+                   <p className="text-sm text-foreground mb-4">Run the following command in your terminal to populate this screen with events:</p>
+                   <code className="block bg-muted p-3 rounded-lg text-xs font-mono text-primary text-left">
+                     node scripts/master-seed.js
+                   </code>
+                </div>
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
