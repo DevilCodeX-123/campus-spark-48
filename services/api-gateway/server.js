@@ -60,11 +60,31 @@ app.use('/api/register', createProxyMiddleware({
   logLevel: 'debug'
 }));
 
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const services = [
+    { name: 'Auth', url: AUTH_SERVICE_URL },
+    { name: 'Event', url: EVENT_SERVICE_URL },
+    { name: 'Registration', url: REG_SERVICE_URL }
+  ];
+
+  const results = await Promise.all(services.map(async (s) => {
+    try {
+      const response = await fetch(`${s.url}/health`, { signal: AbortSignal.timeout(2000) });
+      const data = await response.json();
+      return { name: s.name, status: 'UP', detail: data };
+    } catch (err) {
+      return { name: s.name, status: 'DOWN', error: err.message };
+    }
+  }));
+
+  const allClear = results.every(r => r.status === 'UP');
+
   res.json({ 
-    status: 'API Gateway is running',
+    status: allClear ? 'Healthy' : 'Degraded',
+    gateway: 'UP',
     environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    system_scan: results
   });
 });
 
