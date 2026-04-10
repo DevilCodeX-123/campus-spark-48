@@ -18,13 +18,20 @@ services:
     env: node
     rootDir: services/api-gateway
     buildCommand: npm install
-    startCommand: node index.js
+    startCommand: node server.js
     plan: free
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
+      - key: AUTH_SERVICE_URL
+        sync: false # Set to https://campusconnect-auth-service.onrender.com
+      - key: EVENT_SERVICE_URL
+        sync: false # Set to https://campusconnect-event-service.onrender.com
+      - key: REG_SERVICE_URL
+        sync: false # Set to https://campusconnect-registration-service.onrender.com
 
   # ── Auth Service ───────────────────────────────────────────────────────
   - type: web
@@ -32,15 +39,16 @@ services:
     env: node
     rootDir: services/auth-service
     buildCommand: npm install
-    startCommand: node index.js
+    startCommand: node server.js
     plan: free
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3001
       - key: MONGO_URI
-        sync: false   # Set this in the Render dashboard → Environment tab
+        sync: false
 
   # ── Event Service ──────────────────────────────────────────────────────
   - type: web
@@ -48,8 +56,9 @@ services:
     env: node
     rootDir: services/event-service
     buildCommand: npm install
-    startCommand: node index.js
+    startCommand: node server.js
     plan: free
+    healthCheckPath: /api/events/health
     envVars:
       - key: NODE_ENV
         value: production
@@ -64,8 +73,9 @@ services:
     env: node
     rootDir: services/registration-service
     buildCommand: npm install
-    startCommand: node index.js
+    startCommand: node server.js
     plan: free
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
