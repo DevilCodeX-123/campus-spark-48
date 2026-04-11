@@ -9,18 +9,19 @@ dotenv.config({ path: '../../.env' });
 const app = express();
 
 const allowedOrigins = [
-  'http://localhost:5173', 
-  'http://localhost:5174', 
+  'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:5175',
-  'https://collegeconnect-iota.vercel.app'
+  'https://collegeconnect-iota.vercel.app',
+  'https://vercel.com/devil-boss-projects/college_connect/EyoMMDm6z9f37wh8ATZarJLYYCVx'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    const isAllowed = allowedOrigins.includes(origin) || 
-                     origin.endsWith('.vercel.app') ||
-                     origin.includes('onrender.com');
+    const isAllowed = allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('onrender.com');
     if (isAllowed) {
       callback(null, true);
     } else {
@@ -36,8 +37,8 @@ app.use('/ads', adRoutes);
 
 // Health Check for Gateway
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'Ad Service is running', 
+  res.json({
+    status: 'Ad Service is running',
     db: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
     timestamp: new Date().toISOString()
   });
