@@ -55,7 +55,7 @@ const StudentPortal: React.FC = () => {
     return 'bg-primary/15 text-primary group-hover:bg-primary/25';
   };
 
-  const categories = ['all', ...new Set(dbEvents.map((e: any) => (e.category || '').toLowerCase()).filter(Boolean))];
+  const categories: string[] = ['all', ...new Set(dbEvents.map((e: any) => ((e.category || '').toLowerCase() as string)).filter(Boolean))];
 
   const tabs = [
     { id: 'browse', label: 'Discover Events', icon: <Search className="h-4 w-4" /> },

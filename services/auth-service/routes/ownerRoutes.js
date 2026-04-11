@@ -92,10 +92,10 @@ router.post('/assign-website-admin', ownerAuth, async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.role = 'website_admin';
+    user.role = 'owner';
     await user.save();
 
-    res.json({ message: 'Role updated to Website Admin' });
+    res.json({ message: 'Role updated to Platform Owner' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

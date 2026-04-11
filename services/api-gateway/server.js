@@ -16,6 +16,7 @@ app.use(cors());
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const EVENT_SERVICE_URL = process.env.EVENT_SERVICE_URL || 'http://localhost:3002';
 const REG_SERVICE_URL = process.env.REG_SERVICE_URL || 'http://localhost:3003';
+const AD_SERVICE_URL = process.env.AD_SERVICE_URL || 'http://localhost:3004';
 
 // Frontend URL for the welcome page link
 const FRONTEND_URL = process.env.NODE_ENV === 'production' 
@@ -60,11 +61,20 @@ app.use('/api/register', createProxyMiddleware({
   logLevel: 'debug'
 }));
 
+// Ad Service proxy
+app.use('/api/ads', createProxyMiddleware({
+  target: `${AD_SERVICE_URL}/ads`,
+  changeOrigin: true,
+  pathRewrite: { '^/api/ads': '' },
+  logLevel: 'debug'
+}));
+
 app.get('/health', async (req, res) => {
   const services = [
     { name: 'Auth', url: AUTH_SERVICE_URL },
     { name: 'Event', url: EVENT_SERVICE_URL },
-    { name: 'Registration', url: REG_SERVICE_URL }
+    { name: 'Registration', url: REG_SERVICE_URL },
+    { name: 'Ads', url: AD_SERVICE_URL }
   ];
 
   const results = await Promise.all(services.map(async (s) => {

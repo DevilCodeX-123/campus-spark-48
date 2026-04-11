@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['owner', 'website_admin', 'college_admin', 'event_head', 'helper', 'student'], 
+    enum: ['owner', 'college_admin', 'event_head', 'event_assistant', 'student'], 
     default: 'student' 
   },
   collegeId: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
