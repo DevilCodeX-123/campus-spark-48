@@ -12,16 +12,17 @@ mongoose.set('strictQuery', false);
 
 const app = express();
 const httpServer = createServer(app);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://collegeconnect-iota.vercel.app'],
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://collegeconnect-iota.vercel.app'],
+  origin: true,
   credentials: true
 }));
 app.use(express.json());

@@ -10,7 +10,10 @@ const app = express();
 // Trust proxy for production environments (Render/Vercel)
 app.set('trust proxy', 1);
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 
 // Production Service URLs
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
@@ -19,54 +22,70 @@ const REG_SERVICE_URL = process.env.REG_SERVICE_URL || 'http://localhost:3003';
 const AD_SERVICE_URL = process.env.AD_SERVICE_URL || 'http://localhost:3004';
 
 // Frontend URL for the welcome page link
-const FRONTEND_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://college-connect-frontend.vercel.app' // This will be your Vercel URL
+const FRONTEND_URL = process.env.NODE_ENV === 'production'
+  ? 'https://collegeconnect-iota.vercel.app' // This will be your Vercel URL
   : 'http://localhost:5173';
+
+// Common Proxy Configuration for perfection
+const proxyConfig = {
+  changeOrigin: true,
+  logLevel: 'debug',
+  proxyTimeout: 30000,   // Wait 30s for service to respond
+  onProxyReq: (proxyReq, req, res) => {
+    // Keep internal headers for downstream traceability
+    proxyReq.setHeader('X-Gateway-Request', 'true');
+  },
+  onError: (err, req, res) => {
+    console.error(`❌ [GATEWAY PROXY ERROR] ${err.code} on ${req.url}`);
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.status(503).json({
+      success: false,
+      message: 'Service Temporarily Unavailable',
+      service_status: req.url.split('/')[2],
+      original_error: err.code
+    });
+  }
+};
 
 // Auth Service proxy
 app.use('/api/auth', createProxyMiddleware({
+  ...proxyConfig,
   target: `${AUTH_SERVICE_URL}/auth`,
-  changeOrigin: true,
-  pathRewrite: { '^/api/auth': '' },
-  logLevel: 'debug'
+  pathRewrite: { '^/api/auth': '' }
 }));
 
 app.use('/api/owner', createProxyMiddleware({
+  ...proxyConfig,
   target: `${AUTH_SERVICE_URL}/owner`,
-  changeOrigin: true,
-  pathRewrite: { '^/api/owner': '' },
-  logLevel: 'debug'
+  pathRewrite: { '^/api/owner': '' }
 }));
 
 // Event Service proxy
 app.use('/api/events', createProxyMiddleware({
+  ...proxyConfig,
   target: `${EVENT_SERVICE_URL}/events`,
-  changeOrigin: true,
-  pathRewrite: { '^/api/events': '' },
-  logLevel: 'debug'
+  pathRewrite: { '^/api/events': '' }
 }));
 
 app.use('/api/budget', createProxyMiddleware({
+  ...proxyConfig,
   target: `${EVENT_SERVICE_URL}/budget`,
-  changeOrigin: true,
-  pathRewrite: { '^/api/budget': '' },
-  logLevel: 'debug'
+  pathRewrite: { '^/api/budget': '' }
 }));
 
 // Registration Service proxy
 app.use('/api/register', createProxyMiddleware({
+  ...proxyConfig,
   target: `${REG_SERVICE_URL}/register`,
-  changeOrigin: true,
-  pathRewrite: { '^/api/register': '' },
-  logLevel: 'debug'
+  pathRewrite: { '^/api/register': '' }
 }));
 
 // Ad Service proxy
 app.use('/api/ads', createProxyMiddleware({
+  ...proxyConfig,
   target: `${AD_SERVICE_URL}/ads`,
-  changeOrigin: true,
-  pathRewrite: { '^/api/ads': '' },
-  logLevel: 'debug'
+  pathRewrite: { '^/api/ads': '' }
 }));
 
 app.get('/health', async (req, res) => {
@@ -89,7 +108,7 @@ app.get('/health', async (req, res) => {
 
   const allClear = results.every(r => r.status === 'UP');
 
-  res.json({ 
+  res.json({
     status: allClear ? 'Healthy' : 'Degraded',
     gateway: 'UP',
     environment: process.env.NODE_ENV || 'development',

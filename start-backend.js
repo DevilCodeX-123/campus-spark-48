@@ -9,6 +9,7 @@ const services = [
   { name: 'AUTH', path: 'services/auth-service', port: 3001 },
   { name: 'EVENT', path: 'services/event-service', port: 3002 },
   { name: 'REGISTRATION', path: 'services/registration-service', port: 3003 },
+  { name: 'AD', path: 'services/ad-service', port: 3004 },
   { name: 'GATEWAY', path: 'services/api-gateway', port: 8080 }
 ];
 
