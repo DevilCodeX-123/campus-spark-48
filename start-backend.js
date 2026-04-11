@@ -10,7 +10,7 @@ const services = [
   { name: 'EVENT', path: 'services/event-service', port: 3002 },
   { name: 'REGISTRATION', path: 'services/registration-service', port: 3003 },
   { name: 'AD', path: 'services/ad-service', port: 3004 },
-  { name: 'GATEWAY', path: 'services/api-gateway', port: 8080 }
+  { name: 'GATEWAY', path: 'services/api-gateway', port: process.env.PORT || 8080 }
 ];
 
 console.log('🚀 INITIALIZING INDESTRUCTIBLE BACKEND ENGINE...');

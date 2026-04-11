@@ -15,16 +15,25 @@ app.use(cors({
   credentials: true
 }));
 
-// Production Service URLs
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
-const EVENT_SERVICE_URL = process.env.EVENT_SERVICE_URL || 'http://localhost:3002';
-const REG_SERVICE_URL = process.env.REG_SERVICE_URL || 'http://localhost:3003';
-const AD_SERVICE_URL = process.env.AD_SERVICE_URL || 'http://localhost:3004';
+// Dynamic Service URL Configuration
+// If environment variables are provided (Multi-Server Deployment), it uses them.
+// Otherwise, it safely defaults to internal localhost routing (Single-Server Monolith Deployment).
+const getServiceUrl = (envVarName, defaultPort) => {
+  if (process.env[envVarName]) {
+    return process.env[envVarName]; // Use the Render URL if explicitly provided
+  }
+  return `http://localhost:${defaultPort}`; // Internal container routing
+};
+
+const AUTH_SERVICE_URL = getServiceUrl('AUTH_SERVICE_URL', 3001);
+const EVENT_SERVICE_URL = getServiceUrl('EVENT_SERVICE_URL', 3002);
+const REG_SERVICE_URL = getServiceUrl('REG_SERVICE_URL', 3003);
+const AD_SERVICE_URL = getServiceUrl('AD_SERVICE_URL', 3004);
 
 // Frontend URL for the welcome page link
-const FRONTEND_URL = process.env.NODE_ENV === 'production'
-  ? 'https://collegeconnect-iota.vercel.app' // This will be your Vercel URL
-  : 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production'
+  ? 'https://collegeconnect-iota.vercel.app'
+  : 'http://localhost:5173');
 
 // Common Proxy Configuration for perfection
 const proxyConfig = {
