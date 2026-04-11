@@ -29,9 +29,6 @@ app.get('/health', (req, res) => {
 const PORT = process.env.AD_PORT || 3004;
 
 const MONGO_URI = process.env.MONGO_URI;
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('🚀 Ad Service Connected to MongoDB');
-    app.listen(PORT, () => console.log(`🌟 Ad Service active on port ${PORT}`));
-  })
-  .catch(err => console.error('❌ Ad Service DB Error:', err));
+mongoose.connect(MONGO_URI).catch(err => console.error('❌ Ad Service DB Error:', err));
+
+app.listen(PORT, () => console.log(`🌟 Ad Service (Resilient Mode) active on port ${PORT}`));

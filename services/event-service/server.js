@@ -11,27 +11,7 @@ mongoose.set('strictQuery', false);
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173', 
-  'http://localhost:5174', 
-  'http://localhost:5175',
-  'https://collegeconnect-iota.vercel.app'
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const isAllowed = allowedOrigins.includes(origin) || 
-                     origin.endsWith('.vercel.app') ||
-                     origin.includes('onrender.com');
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.use('/events', eventRoutes);
@@ -47,9 +27,9 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3002;
 
-const start = async () => {
-  await connectDB();
-  app.listen(PORT, () => console.log(`🚀 Event Service running on port ${PORT}`));
+const start = () => {
+  connectDB();
+  app.listen(PORT, () => console.log(`🚀 Event Service (Resilient Mode) running on port ${PORT}`));
 };
 
 start();

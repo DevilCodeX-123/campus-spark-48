@@ -1,295 +1,376 @@
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
-import QRCodeCard from '@/components/QRCodeCard';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/utils/api';
-import { Calendar, Ticket, User, Search, Loader2, CheckCircle, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  LayoutDashboard, Compass, Ticket, BookOpen, Star, 
+  Search, Bell, Filter, Grid, List, MapPin, Calendar, 
+  ChevronRight, ArrowRight, Heart, Award, Bookmark, 
+  User, LogOut, Loader2, Sparkles, TrendingUp, Clock,
+  ArrowUpRight, ShieldCheck, Zap, Map as MapIcon
+} from 'lucide-react';
+import EventCalendar from '@/components/EventCalendar';
+import GamificationPanel from '@/components/GamificationPanel';
+import CampusMap from '@/components/CampusMap';
 
 const StudentPortal: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('browse');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [tab, setTab] = useState('discover');
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All');
 
-  // Fetch real events from database
-  const { data: dbEvents = [], isLoading: isEventsLoading } = useQuery({
-    queryKey: ['portal_events'],
-    queryFn: async () => {
-      const res = await api.get('/events');
-      return res.data;
-    }
+  // Queries
+  const { data: events = [], isLoading: loadEv } = useQuery({
+    queryKey: ['student_events'],
+    queryFn: () => api.get('/events').then(r => r.data).catch(() => []),
   });
 
-  // Fetch student's real registrations
-  const { data: myRegistrations = [], isLoading: isRegLoading } = useQuery({
-    queryKey: ['myRegistrations', user?.id],
-    queryFn: async () => {
-      const res = await api.get(`/register/user/${user?.id}`);
-      return res.data;
-    },
-    enabled: !!user?.id
+  const categories = ['All', 'Technical', 'Cultural', 'Sports', 'Workshops', 'Academic'];
+
+  const filteredEvents = events.filter((e: any) => {
+    const titleMatch = (e.title || '').toLowerCase().includes(search.toLowerCase());
+    const catMatch = category.toLowerCase() === 'all' || 
+                    (e.category || '').toLowerCase() === category.toLowerCase();
+    return titleMatch && catMatch;
   });
 
-  const registeredEventIds = myRegistrations.map((r: any) => r.eventId);
-
-  // Advanced Frontend Filtering
-  const filteredEvents = Array.isArray(dbEvents) ? dbEvents.filter((e: any) => {
-    const title = (e.title || '').toLowerCase();
-    const college = (e.collegeName || '').toLowerCase();
-    const matchesSearch = title.includes(searchQuery.toLowerCase()) || college.includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || (e.category || '').toLowerCase() === categoryFilter.toLowerCase();
-    return matchesSearch && matchesCategory;
-  }) : [];
-
-  // Map vibrant tailwind colors dynamically to categories
-  const getCategoryColor = (category: string) => {
-    const cat = (category || '').toLowerCase();
-    if (cat.includes('tech')) return 'bg-blue-500/15 text-blue-700 dark:text-blue-400 group-hover:bg-blue-500/20';
-    if (cat.includes('cult')) return 'bg-pink-500/15 text-pink-700 dark:text-pink-400 group-hover:bg-pink-500/20';
-    if (cat.includes('sport')) return 'bg-orange-500/15 text-orange-700 dark:text-orange-400 group-hover:bg-orange-500/20';
-    if (cat.includes('work')) return 'bg-purple-500/15 text-purple-700 dark:text-purple-400 group-hover:bg-purple-500/20';
-    if (cat.includes('semi')) return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-500/20';
-    return 'bg-primary/15 text-primary group-hover:bg-primary/25';
-  };
-
-  const categories: string[] = ['all', ...new Set(dbEvents.map((e: any) => ((e.category || '').toLowerCase() as string)).filter(Boolean))];
-
-  const tabs = [
-    { id: 'browse', label: 'Discover Events', icon: <Search className="h-4 w-4" /> },
-    { id: 'registrations', label: 'My Tickets', icon: <Ticket className="h-4 w-4" /> },
-    { id: 'profile', label: 'Profile Settings', icon: <User className="h-4 w-4" /> },
+  const mockPasses = [
+    { title: 'Nexus Hackathon 2026', id: 'TKT-920182', date: 'Apr 20, 2026', status: 'upcoming', college: 'Main Campus' },
+    { title: 'Symphony CultNite', id: 'TKT-112039', date: 'May 05, 2026', status: 'upcoming', college: 'City College' },
   ];
 
   return (
-    <>
-      <DashboardLayout role="student" tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
-        {activeTab === 'browse' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search events by title or college..."
-                  className="w-full rounded-2xl border border-input bg-card py-4 pl-12 pr-6 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                />
+    <div className="min-h-screen bg-slate-50 dark:bg-[#06080f] text-slate-900 dark:text-slate-100">
+      {/* Dynamic Navbar */}
+      <nav className="sticky top-0 z-50 bg-white/70 dark:bg-[#0d101a]/70 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 py-3 px-8 transition-all">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+           <div className="flex items-center gap-10">
+              <Link to="/student" className="flex items-center gap-2">
+                 <div className="h-9 w-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg shadow-blue-600/20">C</div>
+                 <span className="font-black text-xl tracking-tighter uppercase">CampusConnect</span>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                 {['discover', 'schedule', 'passes', 'achievements', 'campus', 'profile'].map(t => (
+                    <button key={t} onClick={() => setTab(t)} className={`text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>
+                       {t}
+                    </button>
+                 ))}
               </div>
-              <select
-                value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
-                className="w-full sm:w-auto rounded-2xl border border-input bg-card px-6 py-4 text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-              >
-                <option value="all">ALL CATEGORIES</option>
-                {categories.filter(c => c !== 'all').map(c => (
-                  <option key={c as string} value={c as string}>{c}</option>
-                ))}
-              </select>
-            </div>
+           </div>
+           
+           <div className="flex items-center gap-5">
+              <div className="relative hidden lg:block">
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                 <input 
+                   value={search} 
+                   onChange={e => setSearch(e.target.value)} 
+                   placeholder="SEARCH EVENTS, COLLEGES..." 
+                   className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-100/50 dark:bg-white/5 pl-11 pr-6 py-2.5 text-[10px] font-black tracking-widest outline-none focus:ring-1 focus:ring-blue-500 w-80 uppercase" 
+                 />
+              </div>
+              <button className="relative p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                 <Bell className="h-4 w-4" />
+                 <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-[#0d101a]" />
+              </button>
+              <div className="flex items-center gap-3 pl-4 border-l border-slate-100 dark:border-white/10">
+                 <div className="text-right hidden sm:block">
+                    <p className="text-[10px] font-black leading-none uppercase">{user?.name}</p>
+                    <p className="text-[9px] font-bold text-blue-500 uppercase mt-0.5 tracking-widest">Level 12 Student</p>
+                 </div>
+                 <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black shadow-lg">
+                    {user?.name?.charAt(0)}
+                 </div>
+                 <button onClick={() => { logout(); navigate('/'); }} className="p-2 text-slate-400 hover:text-red-500"><LogOut className="h-4 w-4" /></button>
+              </div>
+           </div>
+        </div>
+      </nav>
 
-            {isEventsLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : filteredEvents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-border bg-muted/30 text-center px-6">
-                <Calendar className="h-16 w-16 text-muted-foreground/30 animate-pulse" />
-                <h3 className="mt-6 font-heading text-2xl font-bold text-foreground">Discovering Your Campus...</h3>
-                <p className="mt-2 max-w-md text-muted-foreground">
-                  Our sensors are active, but no events have been posted yet. 
-                  If you are the administrator, please ensure your database is seeded with "WOW" content.
-                </p>
-                
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <div className="flex items-center gap-2 rounded-2xl bg-success/10 px-4 py-2 text-xs font-bold text-success border border-success/20">
-                     <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]" /> Connected to MongoDB Atlas
-                  </div>
-                  <div className="flex items-center gap-2 rounded-2xl bg-blue-500/10 px-4 py-2 text-xs font-bold text-blue-600 border border-blue-500/20">
-                     <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" /> Services Synchronized
-                  </div>
-                </div>
-
-                <div className="mt-10 p-6 rounded-2xl bg-card border border-border shadow-xl max-w-sm">
-                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">Administrator Quick-Fix</p>
-                   <p className="text-sm text-foreground mb-4">Run the following command in your terminal to populate this screen with events:</p>
-                   <code className="block bg-muted p-3 rounded-lg text-xs font-mono text-primary text-left">
-                     node scripts/master-seed.js
-                   </code>
-                </div>
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredEvents.map((e: any) => {
-                  const eventId = e._id || e.id;
-                  const isRegistered = registeredEventIds.includes(eventId);
-                  const colorClass = getCategoryColor(e.category);
-                  
-                  return (
-                    <div key={eventId} className="group flex flex-col rounded-3xl border border-border bg-card shadow-sm transition-all hover:shadow-2xl hover:-translate-y-1.5 overflow-hidden duration-300">
-                      <div className="relative h-48 bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center overflow-hidden">
-                        {e.coverImage ? (
-                          <img src={e.coverImage} alt={e.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        ) : (
-                          <Calendar className="h-12 w-12 text-primary/20" />
-                        )}
-                        {e.category && (
-                          <div className={`absolute right-3 top-3 rounded-2xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-sm transition-colors duration-300 ${colorClass}`}>
-                            {e.category}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col p-6 relative">
-                        <div className="flex items-start justify-between">
-                          <h3 className="font-heading text-xl font-bold text-foreground line-clamp-1">{e.title}</h3>
-                        </div>
-                        <p className="mt-2 text-sm font-semibold opacity-80">{e.collegeName}</p>
-                        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" /> {e.date} • {e.time}
-                        </p>
-                        <p className="mt-4 text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-1">{e.description}</p>
-                        
-                        <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-5">
-                          <div className="flex items-center gap-2">
-                            <span className={`rounded-xl px-3 py-1 text-xs font-black uppercase tracking-wider ${e.isFree ? 'bg-success/15 text-success' : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'}`}>
-                              {e.isFree ? 'FREE' : `₹${e.price}`}
-                            </span>
-                            <span className="text-xs font-medium text-muted-foreground">{e.seatsLeft} seats</span>
-                          </div>
-                          
-                          {isRegistered ? (
-                            <span className="rounded-xl bg-success/15 px-4 py-2 text-sm font-bold text-success shadow-sm">Registered</span>
-                          ) : (
-                            <button 
-                              onClick={() => navigate(`/register-event/${eventId}`)}
-                              className="rounded-xl bg-primary px-6 py-2 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-95"
-                            >
-                              Register Now
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'registrations' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="font-heading text-2xl font-bold text-foreground">My Virtual Tickets</h2>
-            {isRegLoading ? (
-              <div className="flex h-32 items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : myRegistrations.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-border bg-card p-16 text-center text-muted-foreground">
-                <Ticket className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-medium">You haven't registered for any events yet.</p>
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2">
-                {myRegistrations.map((r: any) => {
-                  const eventDetails = dbEvents.find((e: any) => (e._id || e.id) === r.eventId);
-                  return (
-                    <QRCodeCard
-                      key={r._id || r.id}
-                      value={r.qrCode}
-                      eventTitle={eventDetails?.title || 'Loading event...'}
-                      date={eventDetails?.date || ''}
-                      venue={eventDetails?.venue || ''}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'profile' && (
-          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Stunning Profile Header Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-card">
-              {/* Vibrant Abstract Background Pattern */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-purple-600/20 to-emerald-500/30 opacity-60"></div>
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
+      <main className="max-w-7xl mx-auto px-8 py-10 space-y-12">
+         
+         {/* DISCOVER TAB */}
+         {tab === 'discover' && (
+           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              <div className="relative p-10 flex flex-col md:flex-row items-center gap-8 backdrop-blur-xl bg-background/40">
-                <div className="relative group">
-                  <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-70 blur-md group-hover:opacity-100 transition duration-500"></div>
-                  <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-background border-4 border-background text-6xl font-black uppercase text-foreground shadow-2xl overflow-hidden">
-                     <span className="bg-clip-text text-transparent bg-gradient-to-br from-primary to-purple-600">
-                        {user?.name?.charAt(0) || 'S'}
-                     </span>
-                  </div>
-                </div>
-                
-                <div className="text-center md:text-left flex-1">
-                  <h2 className="font-heading text-4xl font-black text-foreground tracking-tight drop-shadow-sm">{user?.name || 'Student Achiever'}</h2>
-                  <p className="mt-2 text-lg font-medium text-muted-foreground">{user?.email}</p>
-                  
-                  <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest text-blue-700 dark:text-blue-400 border border-blue-500/20 shadow-sm">
-                      <User className="h-4 w-4" /> Student Tier
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-sm">
-                      <CheckCircle className="h-4 w-4" /> Verified Identity
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Data Cards Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-background/80 backdrop-blur-3xl border-t border-border/50">
-                {/* College Info Card */}
-                 <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card to-muted p-6 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
-                   <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <MapPin className="h-32 w-32" />
-                   </div>
-                   <div className="flex items-center gap-3 mb-4">
-                     <div className="bg-primary/20 p-2.5 rounded-xl text-primary">
-                       <MapPin className="h-6 w-6" />
-                     </div>
-                     <label className="text-sm font-black text-muted-foreground uppercase tracking-widest">Enrolled Institution</label>
-                   </div>
-                   <p className="text-xl md:text-2xl font-bold text-foreground leading-tight">
-                     {user?.college || 'No College Linked'}
-                   </p>
+              {/* HERO SECTION */}
+              <section className="relative h-[480px] rounded-[48px] overflow-hidden group">
+                 <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/40 to-transparent z-10" />
+                 <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80" alt="hero" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[10s]" />
+                 
+                 <div className="absolute inset-0 z-20 flex flex-col justify-center px-16 max-w-2xl space-y-6">
+                    <div className="flex items-center gap-2 bg-blue-600/20 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 w-fit">
+                       <Zap className="h-4 w-4 text-blue-500 fill-current" />
+                       <span className="text-[10px] font-black text-blue-100 tracking-[0.2em] uppercase">Trending Now @ IIT Delhi</span>
+                    </div>
+                    <h1 className="text-6xl font-black text-white leading-tight tracking-tighter uppercase italic">The Future of <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Engineering.</span></h1>
+                    <p className="text-slate-300 font-bold text-lg leading-relaxed">Join 500+ hackers at Nexus Hackathon 2026. Submissions open for next 48 hours.</p>
+                    <div className="flex gap-4 pt-4">
+                       <button 
+                          onClick={() => {
+                             const el = document.getElementById('discover-events');
+                             if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="bg-white text-slate-900 rounded-2xl px-10 py-5 font-black text-xs uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
+                       >
+                          Register Now
+                       </button>
+                       <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl px-8 py-5 font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all">View Details</button>
+                    </div>
                  </div>
+              </section>
 
-                {/* Event Participations Card */}
-                 <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card to-muted p-6 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
-                   <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Ticket className="h-32 w-32" />
-                   </div>
-                   <div className="flex items-center gap-3 mb-4">
-                     <div className="bg-purple-500/20 p-2.5 rounded-xl text-purple-600 dark:text-purple-400">
-                       <Ticket className="h-6 w-6" />
-                     </div>
-                     <label className="text-sm font-black text-muted-foreground uppercase tracking-widest">Global Participation</label>
-                   </div>
-                   <div className="flex items-baseline gap-2">
-                     <p className="text-4xl font-black text-foreground leading-none">
-                       {myRegistrations.length}
-                     </p>
-                     <p className="text-lg font-bold text-muted-foreground">Valid Ticket{myRegistrations.length !== 1 && 's'}</p>
-                   </div>
+              {/* FILTER BAR */}
+              <section id="discover-events" className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-6">
+                 <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
+                    {categories.map(c => (
+                      <button 
+                         key={c} 
+                         onClick={() => setCategory(c)} 
+                         className={`whitespace-nowrap min-h-[44px] rounded-2xl px-8 text-[10px] font-black uppercase tracking-widest transition-all ${category.toLowerCase() === c.toLowerCase() ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-500 hover:bg-slate-50'}`}
+                      >
+                         {c}
+                      </button>
+                    ))}
                  </div>
-              </div>
+                 <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"><Filter className="h-4 w-4" /> Filter</button>
+                    <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+                       <button className="p-2 rounded-lg bg-white dark:bg-white/10 shadow-sm"><Grid className="h-4 w-4" /></button>
+                       <button className="p-2 rounded-lg text-slate-400"><List className="h-4 w-4" /></button>
+                    </div>
+                 </div>
+              </section>
+
+              {/* EVENT GRID */}
+              <section className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+                 {loadEv ? (
+                   <div className="col-span-full h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
+                 ) : filteredEvents.length === 0 ? (
+                   <div className="col-span-full h-80 flex flex-col items-center justify-center rounded-[48px] border-2 border-dashed border-slate-100 dark:border-white/5">
+                      <Compass className="h-16 w-16 text-slate-200 dark:text-white/5 mb-4" />
+                      <p className="text-slate-400 font-black uppercase tracking-widest">No matching events found</p>
+                   </div>
+                 ) : filteredEvents.map((e: any, i: number) => (
+                   <div key={e._id} className="group relative rounded-[40px] bg-white dark:bg-[#0d101a] border border-slate-100 dark:border-white/5 p-5 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                      <div className="relative h-60 rounded-[32px] overflow-hidden mb-6">
+                         <img src={`https://picsum.photos/seed/${i + 20}/800/600`} alt="ev" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                         <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl px-3 py-1.5 text-[10px] font-black text-white uppercase tracking-widest">
+                            {e.category}
+                         </div>
+                         <button className="absolute top-4 right-4 h-10 w-10 bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center text-white hover:bg-red-500 hover:border-red-500 transition-all">
+                            <Heart className="h-4 w-4" />
+                         </button>
+                      </div>
+                      <div className="px-3">
+                         <div className="flex items-center gap-2 mb-3">
+                            <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{e.date}</span>
+                            <span className="h-1 w-1 rounded-full bg-slate-200" />
+                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{e.venue || 'TBA'}</span>
+                         </div>
+                         <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter group-hover:text-blue-600 transition-colors mb-4">{e.title}</h3>
+                         <div className="flex items-center justify-between pt-5 border-t border-slate-50 dark:border-white/5">
+                            <div className="flex -space-x-3">
+                               {[1,2,3].map(j => <div key={j} className="h-8 w-8 rounded-full border-4 border-white dark:border-[#0d101a] bg-slate-200" />)}
+                               <div className="h-8 w-8 rounded-full border-4 border-white dark:border-[#0d101a] bg-blue-100 text-blue-600 flex items-center justify-center text-[8px] font-black">+42</div>
+                            </div>
+                            <span className="text-xl font-black text-slate-900 dark:text-white">{e.isFree ? 'FREE' : `₹${e.price}`}</span>
+                         </div>
+                      </div>
+                   </div>
+                 ))}
+              </section>
+           </div>
+         )}
+
+          {/* SCHEDULE TAB */}
+          {tab === 'schedule' && (
+            <div className="animate-in fade-in duration-500">
+               <EventCalendar />
             </div>
-            
-            <div className="mt-8 text-center text-sm font-medium text-muted-foreground">
-               If you need to update your college affiliation or email, please contact platform support.
+          )}
+
+          {/* PASSES TAB */}
+          {tab === 'passes' && (
+            <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-300">
+               <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-black uppercase tracking-tighter italic">Valid Field Passes</h2>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{mockPasses.length} TICKETS recovered</p>
+               </div>
+
+               <div className="space-y-8">
+                  {mockPasses.map((p, i) => (
+                    <div key={i} className="relative flex flex-col md:flex-row bg-white dark:bg-[#0d101a] border border-slate-100 dark:border-white/5 rounded-[48px] overflow-hidden shadow-sm group hover:shadow-2xl transition-all">
+                       <div className="w-full md:w-[320px] p-0 flex items-center justify-center border-r border-dashed border-slate-100 dark:border-white/10 relative overflow-hidden">
+                          <img 
+                            src={`https://images.unsplash.com/photo-${i === 0 ? '1504384308090-c894fdcc538d' : '1514525253344-f81fbf0ba76b'}?auto=format&fit=crop&q=80&w=800`} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80"
+                            alt="event"
+                          />
+                          <div className="absolute inset-0 bg-blue-900/40 mix-blend-multiply" />
+                          <div className="relative z-10 flex flex-col items-center">
+                             <div className="h-32 w-32 bg-white/10 backdrop-blur-md rounded-[32px] p-6 shadow-2xl border border-white/20 flex items-center justify-center">
+                                <div className="h-full w-full bg-white rounded-lg flex items-center justify-center p-2">
+                                   <div className="h-full w-full bg-slate-900 rounded-[2px]" /> {/* QR Mock */}
+                                </div>
+                             </div>
+                             <p className="mt-6 text-[10px] font-black text-white uppercase tracking-[0.2em]">{p.id}</p>
+                          </div>
+                          <div className="absolute top-1/2 -right-4 h-8 w-8 bg-slate-50 dark:bg-[#06080f] rounded-full -translate-y-1/2" />
+                       </div>
+                       <div className="flex-1 p-12 flex flex-col justify-center">
+                          <div className="flex items-center gap-2 mb-4">
+                             <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                             <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active Registry</span>
+                          </div>
+                          <h3 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4 leading-none">{p.title}</h3>
+                          <div className="flex items-center gap-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10">
+                             <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-blue-500" /> {p.college}</span>
+                             <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-blue-500" /> {p.date}</span>
+                          </div>
+                          <div className="flex gap-4">
+                             <button 
+                                onClick={() => toast.success('Ticket PDF synchronized and downloaded.')}
+                                className="h-14 px-10 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-blue-600/30 hover:bg-blue-500 transition-all flex items-center gap-3 active:scale-95"
+                             >
+                                <Ticket className="h-4 w-4" /> Download Pass
+                             </button>
+                             <button 
+                                onClick={() => setTab('campus')}
+                                className="h-14 px-8 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all active:scale-95"
+                             >
+                                View On Map
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                  ))}
+               </div>
             </div>
-          </div>
-        )}
-      </DashboardLayout>
-    </>
+          )}
+
+          {/* ACHIEVEMENTS TAB */}
+          {tab === 'achievements' && (
+            <div className="animate-in fade-in duration-500">
+               <GamificationPanel />
+            </div>
+          )}
+
+          {/* CAMPUS TAB */}
+          {tab === 'campus' && (
+            <div className="animate-in fade-in duration-500 space-y-10">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-black uppercase tracking-tighter italic">Institutional Layout</h3>
+                  <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 rounded-full text-[9px] font-black text-emerald-600 uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">
+                     <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" /> Signal Active: Gate 4
+                  </div>
+               </div>
+               <CampusMap collegeId={user?.collegeId} />
+            </div>
+          )}
+
+         {/* PROFILE TAB */}
+         {tab === 'profile' && (
+            <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-300">
+               <div className="flex items-end gap-10">
+                  <div className="h-40 w-40 rounded-[48px] bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-2xl">
+                     <div className="h-full w-full rounded-[44px] border-8 border-white dark:border-[#06080f] overflow-hidden flex items-center justify-center bg-slate-100">
+                        <User className="h-16 w-16 text-slate-300" />
+                     </div>
+                  </div>
+                  <div className="pb-4 space-y-3">
+                     <p className="text-xs font-black text-blue-500 uppercase tracking-[0.3em]">ID: CC-S-2026-9182</p>
+                     <h2 className="text-5xl font-black uppercase tracking-tighter">{user?.name}</h2>
+                     <div className="flex items-center gap-4 text-sm font-bold text-slate-400 uppercase tracking-widest">
+                        <span>{user?.college}</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300" />
+                        <span>B.Tech CSE '26</span>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="grid gap-8 lg:grid-cols-3">
+                  <div className="lg:col-span-2 space-y-10">
+                     <div className="space-y-6">
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Skill Achievements</h3>
+                        <div className="grid gap-4 md:grid-cols-2">
+                           {[
+                             { skill: 'Hackathon Mastery', level: 'Expert', color: 'text-orange-500' },
+                             { skill: 'Event Organization', level: 'Intermediate', color: 'text-blue-500' },
+                             { skill: 'Strategic Planning', level: 'Advanced', color: 'text-purple-500' },
+                             { skill: 'Global Citizen', level: 'Elite', color: 'text-emerald-500' },
+                           ].map((s, i) => (
+                             <div key={i} className="flex items-center gap-4 p-6 bg-white dark:bg-[#0d101a] border border-slate-100 dark:border-white/5 rounded-[32px]">
+                                <Bookmark className={`h-8 w-8 ${s.color} fill-current`} />
+                                <div>
+                                   <p className="text-xs font-black uppercase tracking-tight">{s.skill}</p>
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{s.level} Level</p>
+                                </div>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                     <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Accomplishment History</h3>
+                           <button className="text-[10px] font-black text-blue-600 uppercase tracking-widest">View Portfolio</button>
+                        </div>
+                        <div className="bg-white dark:bg-[#0d101a] border border-slate-100 dark:border-white/5 rounded-[40px] divide-y divide-slate-50 dark:divide-white/5">
+                           {[1,2,3].map(i => (
+                             <div key={i} className="p-8 flex items-center justify-between group">
+                                <div className="flex items-center gap-6">
+                                   <div className="h-12 w-12 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400"><Award className="h-6 w-6" /></div>
+                                   <div>
+                                      <p className="text-sm font-black uppercase tracking-tight">Technical Excellence Award</p>
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Granted by IIT Kharagpur · Mar 2026</p>
+                                   </div>
+                                </div>
+                                <ArrowUpRight className="h-5 w-5 text-slate-200 group-hover:text-blue-600 transition-colors" />
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-8">
+                     <div className="bg-white dark:bg-[#0d101a] border border-slate-100 dark:border-white/5 rounded-[40px] p-10 shadow-sm">
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Personal Statistics</h3>
+                        <div className="space-y-8">
+                           {[
+                             { label: 'Event Attendance', val: '94%', trend: '+3%' },
+                             { label: 'Network Reach', val: '432 Users', trend: '+12' },
+                             { label: 'Engagement Score', val: 'A+', trend: 'Steady' },
+                             { label: 'Portfolio Health', val: 'Optimal', trend: 'N/A' },
+                           ].map(s => (
+                             <div key={s.label}>
+                                <div className="flex justify-between items-end mb-2">
+                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.label}</span>
+                                   <span className="text-[10px] font-black text-blue-600">{s.trend}</span>
+                                </div>
+                                <p className="text-2xl font-black uppercase tracking-tight">{s.val}</p>
+                             </div>
+                           ))}
+                        </div>
+                        <button className="w-full mt-12 py-5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20">Edit Public Profile</button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
+
+      </main>
+
+      {/* Floating Action for Mobile */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl px-8 py-4 flex md:hidden items-center gap-10 shadow-2xl z-50">
+          <Compass className="h-6 w-6" onClick={() => setTab('discover')} />
+          <Ticket className="h-6 w-6" onClick={() => setTab('passes')} />
+          <Award className="h-6 w-6" onClick={() => setTab('campus')} />
+          <User className="h-6 w-6" onClick={() => setTab('profile')} />
+      </div>
+    </div>
   );
 };
 

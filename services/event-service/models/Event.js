@@ -6,8 +6,8 @@ const eventSchema = new mongoose.Schema({
   date: { type: String, required: true },
   time: { type: String, required: true },
   venue: { type: String, required: true },
-  collegeId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  collegeName: { type: String, required: true },
+  collegeId: { type: mongoose.Schema.Types.ObjectId, required: false }, // Optional for global events
+  collegeName: { type: String, required: false },
   category: { 
     type: String, 
     enum: ['Technical', 'Cultural', 'Sports', 'Workshop', 'Hackathon', 'Career', 'Misc'],
@@ -20,6 +20,13 @@ const eventSchema = new mongoose.Schema({
   price: { type: Number, default: 0 },
   organizerId: { type: mongoose.Schema.Types.ObjectId, required: true }, // College Admin or Event Head
   teamMembers: [{ type: mongoose.Schema.Types.ObjectId }], // Helper IDs
+  headMemberId: { type: mongoose.Schema.Types.ObjectId }, // Appointed Student Head
+  publishTarget: { 
+    type: String, 
+    enum: ['single_college', 'multiple_colleges', 'global'], 
+    default: 'single_college' 
+  },
+  allowedColleges: [{ type: mongoose.Schema.Types.ObjectId }], // For multiple_colleges target
   status: { 
     type: String, 
     enum: ['upcoming', 'ongoing', 'completed', 'cancelled'], 

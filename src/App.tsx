@@ -37,7 +37,7 @@ const App = () => (
             <Route path="/signup" element={<StudentSignup />} />
             <Route path="/register-college" element={<CollegeAdminSignup />} />
             <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
-            <Route path="/owner-access-9x72k" element={<OwnerPanel />} />
+            <Route path="/owner-access-9x72k" element={<RoleGuard allowedRoles={['owner']}><OwnerPanel /></RoleGuard>} />
             <Route path="/admin" element={<RoleGuard allowedRoles={['website_admin']}><PlatformAdminDashboard /></RoleGuard>} />
             <Route path="/college-admin" element={<RoleGuard allowedRoles={['college_admin']}><CollegeAdminDashboard /></RoleGuard>} />
             <Route path="/event-head" element={<RoleGuard allowedRoles={['event_head']}><EventHeadDashboard /></RoleGuard>} />

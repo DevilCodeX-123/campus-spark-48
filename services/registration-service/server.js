@@ -52,9 +52,9 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3003;
 
-const start = async () => {
-  await connectDB();
-  httpServer.listen(PORT, () => console.log(`🚀 Registration Service running on port ${PORT}`));
+const start = () => {
+  connectDB();
+  httpServer.listen(PORT, () => console.log(`🚀 Registration Service (Resilient Mode) running on port ${PORT}`));
 };
 
 start();

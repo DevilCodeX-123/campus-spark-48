@@ -55,9 +55,9 @@ app.get('/health', (req, res) => {
 // Start Service
 const PORT = process.env.PORT || 3001;
 
-const start = async () => {
-  await connectDB();
-  app.listen(PORT, () => console.log(`🚀 Auth Service running on port ${PORT}`));
+const start = () => {
+  connectDB(); // Fire and forget connection logic (db.js handles retries)
+  app.listen(PORT, () => console.log(`🚀 Auth Service (Resilient Mode) running on port ${PORT}`));
 };
 
 start();

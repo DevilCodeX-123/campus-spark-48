@@ -1,401 +1,396 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/utils/api';
 import { toast } from 'sonner';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import {
-  LayoutDashboard, Calendar, Users, DollarSign, BarChart3, LogOut,
-  Menu, X, Search, Download, Pencil, Trash2, Loader2, Plus,
-  TrendingUp, UserCheck, Target, CheckCircle2, AlertCircle
+  LayoutDashboard, Users, ClipboardList, UserCheck, 
+  MessageSquare, Settings, LogOut, Menu, X, Plus, 
+  Search, Calendar, MapPin, Clock, ChevronRight,
+  TrendingUp, Activity, CheckCircle, AlertCircle, 
+  Loader2, Filter, MoreHorizontal, Send, Bell,
+  UserPlus, Award, Zap, ShieldCheck
 } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip as RechartsTip, ResponsiveContainer,
+  BarChart, Bar, Cell, PieChart, Pie
+} from 'recharts';
 
 const NAV = [
-  { id: 'events',        label: 'My Events',        icon: Calendar },
-  { id: 'team',          label: 'Team Management',  icon: Users },
-  { id: 'budget',        label: 'Budget Manager',   icon: DollarSign },
-  { id: 'registrations', label: 'Registrations',    icon: UserCheck },
-  { id: 'analytics',    label: 'Analytics',        icon: BarChart3 },
+  { id: 'ops',      label: 'Ops Center',    icon: LayoutDashboard, color: 'text-violet-500' },
+  { id: 'events',   label: 'My Events',     icon: Calendar,        color: 'text-indigo-500' },
+  { id: 'team',     label: 'Team Hub',      icon: Users,           color: 'text-fuchsia-500' },
+  { id: 'tasks',    label: 'Task Engine',   icon: ClipboardList,   color: 'text-pink-500' },
+  { id: 'attendee', label: 'Attendee List', icon: UserCheck,       color: 'text-sky-500' },
 ];
 
-const BUDGET_CATEGORIES = [
-  { key: 'venue',      label: 'Venue & Hall',     color: 'bg-teal-500',   allocated: 30 },
-  { key: 'food',       label: 'Food & Catering',  color: 'bg-emerald-500', allocated: 20 },
-  { key: 'decoration', label: 'Decoration',       color: 'bg-cyan-500',   allocated: 15 },
-  { key: 'marketing',  label: 'Marketing & PR',   color: 'bg-green-500',  allocated: 15 },
-  { key: 'prizes',     label: 'Prizes & Awards',  color: 'bg-lime-500',   allocated: 15 },
-  { key: 'misc',       label: 'Miscellaneous',    color: 'bg-teal-400',   allocated: 5 },
-];
+const COLORS = ['#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
 const EventHeadDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('events');
+  const [activeTab, setActiveTab] = useState('ops');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [regSearch, setRegSearch] = useState('');
-  const [totalBudget, setTotalBudget] = useState(100000);
-  const [allocations, setAllocations] = useState<Record<string, number>>(
-    Object.fromEntries(BUDGET_CATEGORIES.map(c => [c.key, c.allocated]))
-  );
+  const [search, setSearch] = useState('');
 
-  const { data: events = [], isLoading: loadingEvents } = useQuery({
-    queryKey: ['eh_events', user?.collegeId],
-    queryFn: () => api.get(`/events?collegeId=${user?.collegeId}`).then(r => r.data).catch(() => []),
-    enabled: !!user?.collegeId,
+  const qc = useQueryClient();
+
+  // Queries
+  const { data: events = [], isLoading: loadingEv } = useQuery({
+    queryKey: ['head_events', user?.id],
+    queryFn: () => {
+      if (!user?.id) return [];
+      return api.get(`/events?organizerId=${user?.id}`).then(r => r.data).catch(() => []);
+    },
+    enabled: !!user?.id
   });
 
-  const { data: registrations = [], isLoading: loadingRegs } = useQuery({
-    queryKey: ['eh_regs'],
-    queryFn: () => api.get('/register/all').then(r => r.data).catch(() => []),
+  const { data: helpers = [], isLoading: loadingTeam } = useQuery({
+    queryKey: ['head_team', user?.collegeId],
+    queryFn: () => {
+      if (!user?.collegeId) return [];
+      return api.get(`/auth/users?collegeId=${user?.collegeId}&role=helper`).then(r => r.data).catch(() => []);
+    },
+    enabled: !!user?.collegeId
   });
 
-  const allEvents = Array.isArray(events) ? events : [];
-  const allRegs = Array.isArray(registrations) ? registrations : [];
-
-  const filteredRegs = allRegs.filter((r: any) =>
-    (r.userName || '').toLowerCase().includes(regSearch.toLowerCase()) ||
-    (r.userEmail || '').toLowerCase().includes(regSearch.toLowerCase())
-  );
-
-  const totalAllocated = Object.values(allocations).reduce((a, b) => a + b, 0);
-  const spent = Math.round(totalBudget * 0.42); // Mock 42% spend
-  const remaining = totalBudget - spent;
-
-  const handleLogout = () => { logout(); navigate('/'); };
-
-  const mockTeam = [
-    { id: 1, name: 'Arjun Sharma', role: 'Event Assistant', events: 'CodeRed Hackathon', status: 'active' },
-    { id: 2, name: 'Priya Mehra', role: 'Event Assistant', events: 'AI Summit 2026', status: 'active' },
-    { id: 3, name: 'Ravi Kumar', role: 'Event Assistant', events: 'CodeRed Hackathon', status: 'inactive' },
+  const mockTasks = [
+    { id: 1, title: 'Check Sound Mix at Stage A', head: 'Arjun', status: 'Pending', priority: 'High', due: '14:30' },
+    { id: 2, title: 'Collect VIP Lanyards', head: 'Sarah', status: 'Done', priority: 'Medium', due: '12:00' },
+    { id: 3, title: 'Verify Fire Safety Entry', head: 'Mike', status: 'Blocked', priority: 'Critical', due: '10:00' },
   ];
 
+  const engagementTrend = [
+    { time: '09:00', count: 120 }, { time: '11:00', count: 450 },
+    { time: '13:00', count: 780 }, { time: '15:00', count: 910 },
+    { time: '17:00', count: 1100 }, { time: '19:00', count: 1250 },
+  ];
+
+  if (user?.role !== 'event_head') {
+    // navigate('/'); // Prevent redirect loop during hydration
+  }
+
   return (
-    <div className="flex min-h-screen" style={{ background: '#071a19' }}>
+    <div className="flex min-h-screen bg-[#fafafa] dark:bg-[#050505]">
       {/* ──── SIDEBAR ──── */}
-      <aside className={`admin-sidebar head-sidebar transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-teal-500/15">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/20 border border-teal-500/30">
-            <Target className="h-5 w-5 text-teal-400" />
-          </div>
-          <div>
-            <p className="text-sm font-black text-white">Event Head</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-teal-400">{user?.college || 'CampusConnect'}</p>
+      <aside className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-[#0a0a0a] border-r border-[#eeeeee] dark:border-white/5 shadow-2xl transition-all duration-500 ease-in-out ${sidebarOpen ? 'w-72' : 'w-0 overflow-hidden'}`}>
+        <div className="p-8 border-b border-[#f5f5f5] dark:border-white/5">
+          <div className="flex items-center gap-4">
+             <div className="h-12 w-12 rounded-[20px] bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-violet-500/20">H</div>
+             <div className="min-w-0">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Command Hub</p>
+                <div className="flex items-center gap-1.5">
+                   <h1 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">EVENT HEAD</h1>
+                   <div className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                </div>
+                <p className="text-[9px] font-bold text-violet-500 uppercase mt-1 tracking-widest leading-none truncate">{user?.college}</p>
+             </div>
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-4 py-8 space-y-2">
           {NAV.map(item => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const active = activeTab === item.id;
             return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`sidebar-link w-full ${isActive ? 'head-link-active' : 'head-link'}`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
+              <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex w-full items-center gap-3 rounded-2xl px-5 py-4 text-xs font-black uppercase tracking-widest transition-all duration-300 ${active ? 'bg-violet-600 text-white shadow-xl shadow-violet-600/20 translate-x-1' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-violet-600'}`}>
+                <Icon className={`h-4 w-4 ${active ? 'text-white' : item.color}`} />
                 <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Bottom */}
-        <div className="border-t border-teal-500/15 p-4">
-          <div className="flex items-center gap-3 rounded-xl bg-teal-500/10 px-3 py-3 border border-teal-500/15">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-500/20 text-sm font-black text-teal-400 border border-teal-500/30">
-              {user?.name?.charAt(0) || 'E'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white truncate">{user?.name}</p>
-              <p className="text-[10px] text-teal-300/50 truncate">{user?.email}</p>
-            </div>
-            <button onClick={handleLogout} className="text-teal-300/50 hover:text-teal-300 transition-colors">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
+        <div className="p-6">
+           <div className="rounded-3xl bg-slate-50 dark:bg-white/[0.03] p-5 border border-slate-100 dark:border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 font-bold ">{user?.name?.charAt(0)}</div>
+                 <div>
+                    <p className="text-xs font-black text-slate-900 dark:text-white uppercase truncate max-w-[120px]">{user?.name}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Team Lead</p>
+                 </div>
+              </div>
+              <button onClick={() => { logout(); navigate('/'); }} className="w-full py-3 rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-rose-50 transition-all">Sign Out</button>
+           </div>
         </div>
       </aside>
 
-      {/* ──── MAIN ──── */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 border-b backdrop-blur-xl" style={{ background: 'rgba(7,26,25,0.95)', borderColor: 'rgba(20,184,166,0.15)' }}>
+      {/* ──── MAIN CONTENT ──── */}
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-500 ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
+        <header className="sticky top-0 z-30 flex items-center justify-between px-10 py-6 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-2xl border-b border-[#eeeeee] dark:border-white/5">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-teal-400/50 hover:text-teal-400 transition-colors">
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-            <div>
-              <h1 className="text-lg font-black text-white">{NAV.find(n => n.id === activeTab)?.label}</h1>
-              <p className="text-xs text-teal-400/60">Event Head Dashboard</p>
-            </div>
+             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-violet-600 transition-all">
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+             </button>
+             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{NAV.find(n => n.id === activeTab)?.label}</h2>
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <div className="flex items-center gap-2 rounded-full bg-teal-500/10 border border-teal-500/20 px-4 py-1.5">
-              <div className="h-2 w-2 rounded-full bg-teal-400 animate-pulse"></div>
-              <span className="text-xs font-bold text-teal-400">Event Head</span>
-            </div>
+          <div className="flex items-center gap-6">
+             <div className="hidden lg:flex items-center gap-2 rounded-full bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20 px-4 py-2 text-[10px] font-black text-violet-600 uppercase tracking-widest">
+                <ShieldCheck className="h-3.5 w-3.5" /> SECURE CONTEXT
+             </div>
+             <button className="relative p-2 text-slate-400">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1.5 h-2 w-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#050505]" />
+             </button>
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-6" style={{ background: '#071a19' }}>
-
-          {/* ── MY EVENTS ── */}
-          {activeTab === 'events' && (
-            <div className="space-y-4 animate-in fade-in duration-400">
-              <div className="flex items-center justify-between">
-                <h2 className="font-heading text-xl font-black text-white">My Events</h2>
-                <button onClick={() => toast.info('Event creation — contact your College Admin')} className="flex items-center gap-2 rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-teal-400 transition-all shadow-lg shadow-teal-500/20">
-                  <Plus className="h-4 w-4" /> New Event
-                </button>
-              </div>
-              {loadingEvents ? (
-                <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-teal-400" /></div>
-              ) : allEvents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-teal-500/15 py-20" style={{ background: 'rgba(20,184,166,0.03)' }}>
-                  <Calendar className="h-12 w-12 text-teal-500/30 mb-3" />
-                  <p className="text-teal-300/60">No events assigned. Contact your College Admin.</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {allEvents.map((e: any) => (
-                    <div key={e._id} className="group rounded-2xl border border-teal-500/15 p-5 hover:border-teal-500/40 transition-all hover:-translate-y-1" style={{ background: 'rgba(20,184,166,0.05)' }}>
-                      <div className="relative h-28 rounded-xl overflow-hidden mb-4" style={{ background: 'rgba(20,184,166,0.1)' }}>
-                        {e.coverImage && <img src={e.coverImage} alt={e.title} className="absolute inset-0 h-full w-full object-cover opacity-80" />}
-                        <div className="absolute top-2 right-2">
-                          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${e.status === 'ongoing' ? 'bg-green-500/20 text-green-400' : e.status === 'completed' ? 'bg-slate-500/20 text-slate-400' : 'bg-teal-500/20 text-teal-400'}`}>{e.status || 'upcoming'}</span>
-                        </div>
-                      </div>
-                      <h3 className="font-heading font-bold text-white">{e.title}</h3>
-                      <p className="mt-1 text-sm text-teal-300/60">{e.date} · {e.venue || 'TBA'}</p>
-                      <p className="mt-1 text-xs text-teal-300/40">{e.seatsLeft ?? e.capacity} / {e.capacity} seats</p>
-                      <div className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="flex items-center gap-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-1.5 text-xs font-bold text-teal-400 hover:bg-teal-500/20 transition-colors">
-                          <Pencil className="h-3 w-3" /> Edit
-                        </button>
-                        <button className="flex items-center gap-1.5 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-colors">
-                          <Trash2 className="h-3 w-3" /> Delete
-                        </button>
-                      </div>
+        <main className="flex-1 p-10 space-y-10 animate-in fade-in slide-in-from-bottom-3 duration-500">
+          
+          {/* OPS CENTER TAB */}
+          {activeTab === 'ops' && (
+            <div className="space-y-10">
+               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    { label: 'Events Active', val: events.length, icon: Calendar, color: 'text-violet-500' },
+                    { label: 'Total Registrations', val: '4.2K', icon: TrendingUp, color: 'text-indigo-500' },
+                    { label: 'Check-in Rate', val: '74%', icon: Activity, color: 'text-fuchsia-500' },
+                    { label: 'Task Velocity', val: '86%', icon: Zap, color: 'text-sky-500' },
+                  ].map((s, i) => (
+                    <div key={i} className="rounded-3xl bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-8 shadow-sm hover:shadow-xl transition-all group">
+                       <div className={`h-12 w-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center ${s.color} mb-6 group-hover:scale-110 transition-transform`}>
+                          <s.icon className="h-5 w-5" />
+                       </div>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
+                       <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">{s.val}</p>
                     </div>
                   ))}
-                </div>
-              )}
+               </div>
+
+               <div className="grid gap-8 lg:grid-cols-3">
+                  <div className="lg:col-span-2 rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm relative overflow-hidden">
+                     <div className="absolute top-0 right-0 h-40 w-40 bg-violet-600/5 rounded-full blur-[100px]" />
+                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-10">Real-time Check-in Flow</h3>
+                     <div className="h-72 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                           <AreaChart data={engagementTrend}>
+                              <defs>
+                                 <linearGradient id="opGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                 </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eeeeee10" />
+                              <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                              <YAxis hide />
+                              <RechartsTip />
+                              <Area type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#opGrad)" />
+                           </AreaChart>
+                        </ResponsiveContainer>
+                     </div>
+                  </div>
+
+                  <div className="rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm">
+                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Priority Queue</h3>
+                     <div className="space-y-6">
+                        {mockTasks.map(t => (
+                          <div key={t.id} className="flex items-center justify-between group">
+                             <div className="flex items-center gap-4">
+                                <div className={`h-2.5 w-2.5 rounded-full ${t.priority === 'Critical' ? 'bg-rose-500 animate-pulse' : t.priority === 'High' ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                                <div>
+                                   <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t.title}</p>
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Due {t.due} · {t.head}</p>
+                                </div>
+                             </div>
+                             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${t.status === 'Done' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+                                {t.status}
+                             </span>
+                          </div>
+                        ))}
+                     </div>
+                     <button className="w-full mt-10 py-5 bg-violet-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-600/20 hover:bg-violet-500 transition-all">Launch Task Board →</button>
+                  </div>
+               </div>
             </div>
           )}
 
-          {/* ── TEAM MANAGEMENT ── */}
+          {/* EVENTS TAB */}
+          {activeTab === 'events' && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Assigned Delegations</h3>
+                  <button className="h-11 flex items-center gap-2 px-6 rounded-2xl bg-white dark:bg-white/5 border border-[#eeeeee] dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-500"><Filter className="h-4 w-4" /> Filter Ops</button>
+               </div>
+
+               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {loadingEv ? (
+                    <div className="col-span-full py-20 text-center"><Loader2 className="h-10 w-10 animate-spin text-violet-600 mx-auto" /></div>
+                  ) : events.length === 0 ? (
+                    <div className="col-span-full h-96 flex flex-col items-center justify-center rounded-[48px] border-2 border-dashed border-[#eeeeee] dark:border-white/5">
+                        <Calendar className="h-16 w-16 text-slate-200 dark:text-white/5 mb-4" />
+                        <p className="text-slate-400 font-black uppercase tracking-widest">No Active Commands Assigned</p>
+                    </div>
+                  ) : events.map((e: any, i) => (
+                    <div key={i} className="group overflow-hidden rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                       <div className="flex justify-between items-start mb-8">
+                          <div className="h-14 w-14 rounded-2xl bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center text-violet-600 font-black text-2xl group-hover:scale-110 transition-transform">
+                             {e.title.charAt(0)}
+                          </div>
+                          <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Active</span>
+                       </div>
+                       <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4 line-clamp-1">{e.title}</h4>
+                       <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10">
+                          <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {e.venue || 'Block B'}</span>
+                          <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {e.date}</span>
+                       </div>
+                       
+                       <div className="flex items-center justify-between pt-6 border-t border-[#f5f5f5] dark:border-white/5">
+                          <div className="flex -space-x-3">
+                             {[1,2,3].map(j => <div key={j} className="h-8 w-8 rounded-full border-4 border-white dark:border-[#0a0a0a] bg-slate-200" />)}
+                          </div>
+                          <button className="text-[10px] font-black uppercase tracking-widest text-violet-600 hover:underline">Manage Ops →</button>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          )}
+
+          {/* TEAM HUB TAB */}
           {activeTab === 'team' && (
-            <div className="space-y-4 animate-in fade-in duration-400">
-              <div className="flex items-center justify-between">
-                <h2 className="font-heading text-xl font-black text-white">Team Management</h2>
-                <button onClick={() => toast.info('Invite sent!')} className="flex items-center gap-2 rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-teal-400 transition-all shadow-lg shadow-teal-500/20">
-                  <Plus className="h-4 w-4" /> Add Assistant
-                </button>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockTeam.map(member => (
-                  <div key={member.id} className="rounded-2xl border border-teal-500/15 p-5" style={{ background: 'rgba(20,184,166,0.05)' }}>
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-500/15 border border-teal-500/25 text-2xl font-black text-teal-400">
-                        {member.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-white">{member.name}</p>
-                        <p className="text-xs text-teal-300/60 mt-0.5">{member.role}</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 rounded-lg bg-teal-500/5 border border-teal-500/10 px-3 py-2 text-xs text-teal-300/70">
-                      Assigned: {member.events}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${member.status === 'active' ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${member.status === 'active' ? 'bg-green-400' : 'bg-slate-400'}`}></span>
-                        {member.status}
-                      </span>
-                      <button className="text-xs text-red-400/60 hover:text-red-400 transition-colors">Remove</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── BUDGET MANAGER ── */}
-          {activeTab === 'budget' && (
-            <div className="space-y-6 animate-in fade-in duration-400">
-              <h2 className="font-heading text-xl font-black text-white">Budget Manager</h2>
-
-              {/* Budget summary cards */}
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: 'Total Budget',   value: `₹${totalBudget.toLocaleString()}`, color: 'text-teal-400',   border: 'border-teal-500/20', bg: 'rgba(20,184,166,0.05)' },
-                  { label: 'Spent So Far',   value: `₹${spent.toLocaleString()}`,       color: 'text-orange-400', border: 'border-orange-500/20', bg: 'rgba(249,115,22,0.05)' },
-                  { label: 'Remaining',      value: `₹${remaining.toLocaleString()}`,   color: remaining > totalBudget * 0.3 ? 'text-green-400' : 'text-red-400', border: remaining > totalBudget * 0.3 ? 'border-green-500/20' : 'border-red-500/20', bg: remaining > totalBudget * 0.3 ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.05)' },
-                ].map(s => (
-                  <div key={s.label} className="rounded-2xl border p-6" style={{ background: s.bg, borderColor: s.border.replace('border-', '') }}>
-                    <p className="text-xs font-bold uppercase tracking-widest text-teal-300/50">{s.label}</p>
-                    <p className={`mt-2 text-3xl font-black ${s.color}`}>{s.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Total budget input */}
-              <div className="rounded-2xl border border-teal-500/15 p-6" style={{ background: 'rgba(20,184,166,0.05)' }}>
-                <label className="text-xs font-bold uppercase tracking-widest text-teal-400">Set Total Budget (₹)</label>
-                <div className="mt-3 flex items-center gap-4">
-                  <input type="number" value={totalBudget} onChange={e => setTotalBudget(Number(e.target.value))}
-                    className="flex-1 max-w-xs rounded-xl border border-teal-500/20 px-4 py-3 text-xl font-black text-white focus:outline-none focus:border-teal-400"
-                    style={{ background: 'rgba(20,184,166,0.07)' }}
-                  />
-                  <button onClick={() => toast.success('Budget saved!')} className="rounded-xl bg-teal-500 px-6 py-3 font-bold text-white text-sm hover:bg-teal-400 transition-all">
-                    Save Budget
-                  </button>
-                </div>
-              </div>
-
-              {/* Category Allocations */}
-              <div className="rounded-2xl border border-teal-500/15 p-6" style={{ background: 'rgba(20,184,166,0.03)' }}>
-                <h3 className="font-bold text-white mb-6">Category Allocations (%)</h3>
-                <div className="space-y-5">
-                  {BUDGET_CATEGORIES.map(cat => {
-                    const pct = allocations[cat.key] || 0;
-                    const amount = Math.round((pct / 100) * totalBudget);
-                    return (
-                      <div key={cat.key}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-semibold text-teal-200/80">{cat.label}</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-teal-400/60">₹{amount.toLocaleString()}</span>
-                            <span className="text-sm font-black text-teal-400 w-10 text-right">{pct}%</span>
-                          </div>
-                        </div>
-                        <input type="range" min={0} max={100} value={pct}
-                          onChange={e => setAllocations(prev => ({ ...prev, [cat.key]: Number(e.target.value) }))}
-                          className="w-full accent-teal-400 cursor-pointer"
-                        />
-                        <div className="mt-1 h-2 w-full rounded-full bg-teal-500/10">
-                          <div className={`h-2 rounded-full ${cat.color} transition-all duration-300`} style={{ width: `${pct}%` }}></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className={`mt-6 rounded-xl border p-4 flex items-center gap-3 ${totalAllocated > 100 ? 'border-red-500/30 bg-red-500/5' : 'border-green-500/20 bg-green-500/5'}`}>
-                  {totalAllocated > 100 ? <AlertCircle className="h-5 w-5 text-red-400 shrink-0" /> : <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" />}
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="flex items-center justify-between">
                   <div>
-                    <p className={`font-bold text-sm ${totalAllocated > 100 ? 'text-red-400' : 'text-green-400'}`}>
-                      Total Allocated: {totalAllocated}% {totalAllocated > 100 && '— Over budget!'}
-                    </p>
-                    <p className="text-xs text-teal-300/50 mt-0.5">Adjust sliders to keep total at or below 100%</p>
+                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">On-Ground Team (Helpers)</h3>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Recovered {helpers.length} active volunteer entities</p>
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── REGISTRATIONS ── */}
-          {activeTab === 'registrations' && (
-            <div className="space-y-4 animate-in fade-in duration-400">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <h2 className="font-heading text-xl font-black text-white">Registrations ({allRegs.length})</h2>
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-400/40" />
-                    <input value={regSearch} onChange={e => setRegSearch(e.target.value)} placeholder="Search participants..."
-                      className="rounded-xl border border-teal-500/20 pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-teal-400/30 focus:outline-none focus:border-teal-400/60 w-64"
-                      style={{ background: 'rgba(20,184,166,0.07)' }}
-                    />
-                  </div>
-                  <button onClick={() => toast.success('CSV Export — coming soon!')} className="flex items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-500/10 px-4 py-2.5 text-sm font-bold text-teal-400 hover:bg-teal-500/20 transition-colors">
-                    <Download className="h-4 w-4" /> Export CSV
+                  <button className="h-11 flex items-center gap-3 px-8 rounded-2xl bg-violet-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-violet-600/30 hover:bg-violet-500 transition-all">
+                     <UserPlus className="h-4 w-4" /> Onboard Delegate
                   </button>
-                </div>
-              </div>
+               </div>
 
-              <div className="rounded-2xl overflow-hidden border border-teal-500/15" style={{ background: 'rgba(20,184,166,0.03)' }}>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-teal-500/10">
-                      {['Participant', 'Email', 'Event', 'Date', 'Check-In'].map(h => (
-                        <th key={h} className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-teal-400/50">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-teal-500/5">
-                    {loadingRegs ? (
-                      <tr><td colSpan={5} className="py-12 text-center"><Loader2 className="h-6 w-6 animate-spin text-teal-400 mx-auto" /></td></tr>
-                    ) : filteredRegs.length === 0 ? (
-                      <tr><td colSpan={5} className="py-12 text-center text-teal-300/40 text-sm">No registrations found</td></tr>
-                    ) : filteredRegs.slice(0, 50).map((r: any) => (
-                      <tr key={r._id} className="hover:bg-teal-500/3 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-teal-500/15 flex items-center justify-center text-xs font-black text-teal-400">
-                              {(r.userName || 'U').charAt(0)}
-                            </div>
-                            <span className="text-sm font-semibold text-white">{r.userName || '—'}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-teal-300/60">{r.userEmail || '—'}</td>
-                        <td className="px-6 py-4 text-sm text-teal-300/70 font-medium">{r.eventTitle || '—'}</td>
-                        <td className="px-6 py-4 text-xs text-teal-300/40">{r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '—'}</td>
-                        <td className="px-6 py-4">
-                          <span className={`rounded-full px-3 py-1 text-xs font-bold ${r.checkedIn ? 'bg-green-500/10 text-green-400' : 'bg-teal-500/10 text-teal-400'}`}>
-                            {r.checkedIn ? 'Checked In' : 'Pending'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+               <div className="rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 overflow-hidden shadow-sm">
+                  <table className="w-full text-left">
+                     <thead>
+                        <tr className="bg-slate-50 dark:bg-white/[0.03] text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-[#eeeeee] dark:border-white/5">
+                           <th className="px-10 py-6">Entity Identity</th>
+                           <th className="px-10 py-6">Mission Status</th>
+                           <th className="px-10 py-6">Assigned Load</th>
+                           <th className="px-10 py-6 text-right">Interactions</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-[#f5f5f5] dark:divide-white/5">
+                        {loadingTeam ? (
+                          <tr><td colSpan={4} className="py-20 text-center"><Loader2 className="h-8 w-8 animate-spin text-violet-600 mx-auto" /></td></tr>
+                        ) : helpers.length === 0 ? (
+                          <tr><td colSpan={4} className="py-20 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">No volunteer entities synchronized</td></tr>
+                        ) : helpers.map((h, i) => (
+                           <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01] transition-all">
+                              <td className="px-10 py-6">
+                                 <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-[18px] bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-900 dark:text-white font-black">{h.name.charAt(0)}</div>
+                                    <div>
+                                       <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{h.name}</p>
+                                       <p className="text-[10px] font-bold text-slate-400">{h.email}</p>
+                                    </div>
+                                 </div>
+                              </td>
+                              <td className="px-10 py-6">
+                                 <span className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                                    <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full" /> Online
+                                 </span>
+                              </td>
+                              <td className="px-10 py-6 text-xs font-bold text-slate-500">4 Active Tasks</td>
+                              <td className="px-10 py-6 text-right">
+                                 <button className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-violet-600 transition-colors"><MessageSquare className="h-4 w-4" /></button>
+                              </td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
             </div>
           )}
 
-          {/* ── ANALYTICS ── */}
-          {activeTab === 'analytics' && (
-            <div className="space-y-6 animate-in fade-in duration-400">
-              <h2 className="font-heading text-xl font-black text-white">Event Analytics</h2>
-              
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: 'Total Registrations', value: allRegs.length, color: 'text-teal-400' },
-                  { label: 'Events Managed',       value: allEvents.length, color: 'text-emerald-400' },
-                  { label: 'Avg Fill Rate',        value: allEvents.length > 0 ? `${Math.round(Math.random() * 50 + 40)}%` : '—', color: 'text-cyan-400' },
-                ].map(s => (
-                  <div key={s.label} className="rounded-2xl border border-teal-500/15 p-6" style={{ background: 'rgba(20,184,166,0.05)' }}>
-                    <p className="text-xs font-bold uppercase tracking-widest text-teal-400/50">{s.label}</p>
-                    <p className={`mt-2 text-3xl font-black ${s.color}`}>{s.value}</p>
-                  </div>
-                ))}
-              </div>
+          {/* TASK ENGINE TAB */}
+          {activeTab === 'tasks' && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Deployment Task Queue</h3>
+                  <button className="h-11 px-8 rounded-2xl bg-violet-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-violet-600/30 hover:bg-violet-500 transition-all flex items-center gap-2">
+                     <Plus className="h-4 w-4" /> Construct Task
+                  </button>
+               </div>
 
-              {/* Bar chart — visual only */}
-              <div className="rounded-2xl border border-teal-500/15 p-6" style={{ background: 'rgba(20,184,166,0.03)' }}>
-                <h3 className="font-bold text-white mb-6 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-teal-400" /> Registrations by Event</h3>
-                <div className="space-y-4">
-                  {allEvents.slice(0, 6).map((e: any, i: number) => {
-                    const count = Math.floor(Math.random() * 150 + 20);
-                    const maxCount = 200;
-                    const pct = (count / maxCount) * 100;
-                    return (
-                      <div key={e._id}>
-                        <div className="flex justify-between text-sm mb-1.5">
-                          <span className="text-teal-200/80 font-semibold truncate max-w-[200px]">{e.title}</span>
-                          <span className="text-teal-400 font-bold ml-4">{count}</span>
+               <div className="grid gap-8 lg:grid-cols-3">
+                  {['Pending', 'Blocked', 'Done'].map(status => (
+                    <div key={status} className="space-y-6">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center justify-between px-2">
+                          {status} Queue <span className="h-5 w-5 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-900 dark:text-white">{mockTasks.filter(t => t.status === status).length}</span>
+                       </h4>
+                       <div className="space-y-4">
+                          {mockTasks.filter(t => t.status === status).map(t => (
+                            <div key={t.id} className="rounded-3xl bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-6 shadow-sm hover:shadow-xl transition-all cursor-move group">
+                               <div className="flex justify-between items-start mb-4">
+                                  <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${t.priority === 'Critical' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                                     {t.priority}
+                                  </span>
+                                  <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5"><MoreHorizontal className="h-4 w-4 text-slate-400" /></button>
+                               </div>
+                               <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-tight mb-4">{t.title}</p>
+                               <div className="flex items-center justify-between pt-4 border-t border-[#f5f5f5] dark:border-white/5">
+                                  <div className="flex items-center gap-2">
+                                     <div className="h-6 w-6 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[10px] font-black">{t.head.charAt(0)}</div>
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t.head}</span>
+                                  </div>
+                                  <span className="text-[9px] font-black text-slate-400 uppercase">{t.due}</span>
+                               </div>
+                            </div>
+                          ))}
+                          <button className="w-full py-4 rounded-2xl border border-dashed border-[#eeeeee] dark:border-white/10 text-[9px] font-black text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">DROP NEW ENTRY</button>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          )}
+
+          {/* ATTENDEE TAB */}
+          {activeTab === 'attendee' && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Active Presence Monitor</h3>
+                  <div className="flex items-center gap-3">
+                     <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input placeholder="FILTER LOGS..." className="h-11 rounded-2xl border border-[#eeeeee] dark:border-white/10 bg-white dark:bg-[#0a0a0a] pl-11 pr-5 py-3 text-[10px] font-black tracking-widest outline-none focus:ring-1 focus:ring-violet-500 w-64 uppercase" />
+                     </div>
+                  </div>
+               </div>
+
+               <div className="rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm">
+                  <div className="grid gap-12 lg:grid-cols-3 mb-12">
+                     <div className="space-y-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confirmed Presence</p>
+                        <p className="text-4xl font-black text-slate-900 dark:text-white tabular-nums">1,208 <span className="text-sm font-bold text-emerald-500 ml-2 tracking-normal uppercase">Checked-in</span></p>
+                     </div>
+                     <div className="space-y-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Arrivals</p>
+                        <p className="text-4xl font-black text-slate-300 tabular-nums">412</p>
+                     </div>
+                     <div className="space-y-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gateway Velocity</p>
+                        <p className="text-4xl font-black text-violet-600 tabular-nums">42 <span className="text-sm font-bold text-slate-400 ml-2 tracking-normal uppercase">p/min</span></p>
+                     </div>
+                  </div>
+
+                  <div className="space-y-4">
+                     {[1,2,3,4,5].map(i => (
+                        <div key={i} className="flex items-center justify-between py-4 border-b border-[#f5f5f5] dark:border-white/5 last:border-0">
+                           <div className="flex items-center gap-4">
+                              <div className="h-5 w-5 rounded-full bg-emerald-500/20 flex items-center justify-center"><CheckCircle className="h-3 w-3 text-emerald-600" /></div>
+                              <div>
+                                 <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">Attendee Entity #CC-S-{9020 + i}</p>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gate Access #4 · 12 minutes ago</p>
+                              </div>
+                           </div>
+                           <button className="text-[10px] font-black text-violet-600 uppercase tracking-widest hover:underline">View Pass</button>
                         </div>
-                        <div className="h-3 w-full rounded-full bg-teal-500/10">
-                          <div className={`h-3 rounded-full ${['bg-teal-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-green-500', 'bg-lime-500', 'bg-teal-400'][i % 6]} transition-all duration-700`} style={{ width: `${pct}%` }}></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {allEvents.length === 0 && <p className="text-center text-teal-400/40 py-8">No events to analyze yet.</p>}
-                </div>
-              </div>
+                     ))}
+                  </div>
+               </div>
             </div>
           )}
 

