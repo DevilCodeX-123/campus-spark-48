@@ -27,11 +27,30 @@ services:
       - key: PORT
         value: 5000
       - key: AUTH_SERVICE_URL
-        sync: false # Set to https://campusconnect-auth-service.onrender.com
+        value: https://campusconnect-auth-service.onrender.com
       - key: EVENT_SERVICE_URL
-        sync: false # Set to https://campusconnect-event-service.onrender.com
+        value: https://campusconnect-event-service.onrender.com
       - key: REG_SERVICE_URL
-        sync: false # Set to https://campusconnect-registration-service.onrender.com
+        value: https://campusconnect-registration-service.onrender.com
+      - key: AD_SERVICE_URL
+        value: https://campusconnect-ad-service.onrender.com
+
+  # ── Ad Service ─────────────────────────────────────────────────────────
+  - type: web
+    name: campusconnect-ad-service
+    env: node
+    rootDir: services/ad-service
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3004
+      - key: MONGO_URI
+        sync: false
 
   # ── Auth Service ───────────────────────────────────────────────────────
   - type: web
