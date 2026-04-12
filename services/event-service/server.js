@@ -4,6 +4,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import eventRoutes from './routes/eventRoutes.js';
 import budgetRoutes from './routes/budgetRoutes.js';
+import winnerRoutes from './routes/winnerRoutes.js';
+import mapRoutes from './routes/mapRoutes.js';
 
 import connectDB from './utils/db.js';
 
@@ -16,6 +18,8 @@ app.use(express.json());
 
 app.use('/events', eventRoutes);
 app.use('/budget', budgetRoutes);
+app.use('/winners', winnerRoutes);
+app.use('/maps', mapRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ 

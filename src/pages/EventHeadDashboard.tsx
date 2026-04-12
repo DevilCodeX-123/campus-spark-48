@@ -10,7 +10,7 @@ import {
   Search, Calendar, MapPin, Clock, ChevronRight,
   TrendingUp, Activity, CheckCircle, AlertCircle, 
   Loader2, Filter, MoreHorizontal, Send, Bell,
-  UserPlus, Award, Zap, ShieldCheck
+  UserPlus, Award, Zap, ShieldCheck, Trophy
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
@@ -19,12 +19,16 @@ import {
 } from 'recharts';
 
 const NAV = [
-  { id: 'ops',      label: 'Ops Center',    icon: LayoutDashboard, color: 'text-violet-500' },
-  { id: 'events',   label: 'My Events',     icon: Calendar,        color: 'text-indigo-500' },
-  { id: 'team',     label: 'Team Hub',      icon: Users,           color: 'text-fuchsia-500' },
-  { id: 'tasks',    label: 'Task Engine',   icon: ClipboardList,   color: 'text-pink-500' },
-  { id: 'attendee', label: 'Attendee List', icon: UserCheck,       color: 'text-sky-500' },
+  { id: 'ops',      label: 'Ops Center',     icon: LayoutDashboard, color: 'text-violet-500' },
+  { id: 'events',   label: 'My Events',      icon: Calendar,        color: 'text-indigo-500' },
+  { id: 'winners',  label: 'Winners Wall',   icon: Award,           color: 'text-amber-500' },
+  { id: 'budget',   label: 'Budget Suite',   icon: DollarSign,      color: 'text-emerald-500' },
+  { id: 'team',     label: 'Team Hub',       icon: Users,           color: 'text-fuchsia-500' },
+  { id: 'tasks',    label: 'Task Engine',    icon: ClipboardList,   color: 'text-pink-500' },
+  { id: 'attendee', label: 'Attendee List',  icon: UserCheck,       color: 'text-sky-500' },
 ];
+
+import { DollarSign } from 'lucide-react';
 
 const COLORS = ['#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
@@ -343,6 +347,134 @@ const EventHeadDashboard: React.FC = () => {
                        </div>
                     </div>
                   ))}
+               </div>
+            </div>
+          )}
+
+          {/* WINNERS TAB */}
+          {activeTab === 'winners' && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="flex items-center justify-between">
+                  <div>
+                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Final Victory Registry</h3>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Assign trophies and reward points for completed ops</p>
+                  </div>
+               </div>
+
+               <div className="grid gap-10 lg:grid-cols-3">
+                  <div className="lg:col-span-2 rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm">
+                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-10">Construct Trophy Entry</h4>
+                     <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); toast.success('Winner assigned and points distributed.'); }}>
+                        <div className="grid gap-8 sm:grid-cols-2">
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Event Mission</label>
+                              <select className="w-full rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-5 py-4 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white outline-none">
+                                 {events.map((ev: any) => <option key={ev._id}>{ev.title}</option>)}
+                              </select>
+                           </div>
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Winning Entity (Name/ID)</label>
+                              <div className="relative">
+                                 <UserPlus className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                 <input placeholder="SEARCH REGISTRY..." className="w-full rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 pl-12 pr-5 py-4 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white outline-none" />
+                              </div>
+                           </div>
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Achievement Rank</label>
+                              <div className="flex gap-2">
+                                 {['1st', '2nd', '3rd'].map(r => (
+                                    <button type="button" key={r} className="flex-1 py-4 rounded-xl border border-slate-100 dark:border-white/5 text-[10px] font-black uppercase text-slate-400 hover:bg-violet-600 hover:text-white transition-all">{r}</button>
+                                 ))}
+                              </div>
+                           </div>
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Lp Reward Quantum</label>
+                              <input type="number" defaultValue={500} className="w-full rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-5 py-4 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white outline-none" />
+                           </div>
+                        </div>
+                        <button className="w-full py-5 bg-violet-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-violet-600/30 hover:bg-violet-500 transition-all flex items-center justify-center gap-3">
+                           <Award className="h-4 w-4" /> Distribute Achievement
+                        </button>
+                     </form>
+                  </div>
+
+                  <div className="space-y-8">
+                     <div className="rounded-[40px] bg-[#0a0a0a] text-white p-10 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 h-40 w-40 bg-amber-500/20 rounded-full blur-[80px]" />
+                        <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-8">Victory History</h4>
+                        <div className="space-y-6">
+                           {[1,2,3].map(i => (
+                              <div key={i} className="flex items-center gap-5 border-b border-white/5 pb-6 last:border-0 last:pb-0">
+                                 <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-amber-500"><Trophy className="h-5 w-5" /></div>
+                                 <div>
+                                    <p className="text-xs font-black uppercase">Entity #9201</p>
+                                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">Tech Summit · 1st Place</p>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {/* BUDGET TAB */}
+          {activeTab === 'budget' && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Fiscal Suite</h3>
+                  <div className="flex gap-4">
+                     <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl text-[10px] font-black text-emerald-600 uppercase">
+                        Active Budget: ₹45,000
+                     </div>
+                  </div>
+               </div>
+
+               <div className="grid gap-8 lg:grid-cols-2">
+                  <div className="rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm relative overflow-hidden">
+                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-10">Quantum Allocation</h4>
+                     <div className="h-72 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                           <BarChart data={[
+                              { cat: 'Venue', allocated: 15000, spent: 12000 },
+                              { cat: 'Food', allocated: 10000, spent: 11500 },
+                              { cat: 'Prizes', allocated: 8000, spent: 5000 },
+                              { cat: 'Misc', allocated: 12000, spent: 3000 },
+                           ]}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eeeeee10" />
+                              <XAxis dataKey="cat" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: '#64748b' }} />
+                              <YAxis hide />
+                              <RechartsTip />
+                              <Bar dataKey="allocated" fill="#e2e8f0" radius={[4, 4, 0, 0]} barSize={24} />
+                              <Bar dataKey="spent" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={24} />
+                           </BarChart>
+                        </ResponsiveContainer>
+                     </div>
+                  </div>
+
+                  <div className="rounded-[40px] bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-white/5 p-10 shadow-sm">
+                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-10">Log Expense Entry</h4>
+                     <form className="space-y-6">
+                        <div className="grid gap-6 sm:grid-cols-2">
+                           <div className="space-y-2">
+                              <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Target Category</label>
+                              <select className="w-full rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-4 py-3 text-[10px] font-black uppercase text-slate-900 dark:text-white outline-none">
+                                 <option>Venue</option><option>Food</option><option>Prizes</option>
+                              </select>
+                           </div>
+                           <div className="space-y-2">
+                              <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Entry Amount</label>
+                              <input type="number" placeholder="₹0.00" className="w-full rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-4 py-3 text-[10px] font-black uppercase text-slate-900 dark:text-white outline-none" />
+                           </div>
+                           <div className="sm:col-span-2 space-y-2">
+                              <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Description Protocol</label>
+                              <input placeholder="TRANSACTION UTILITY..." className="w-full rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-4 py-3 text-[10px] font-black uppercase text-slate-900 dark:text-white outline-none" />
+                           </div>
+                        </div>
+                        <button className="w-full py-4 bg-slate-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all">Execute Transfer</button>
+                     </form>
+                  </div>
                </div>
             </div>
           )}

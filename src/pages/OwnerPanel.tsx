@@ -434,6 +434,82 @@ const OwnerPanel: React.FC = () => {
             </div>
           )}
 
+          {/* ────── ADS MANAGEMENT ────── */}
+          {activeTab === 'ads' && (
+             <div className="space-y-10 animate-in fade-in duration-500">
+                <div className="flex items-center justify-between">
+                   <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Propaganda Engine (Ads)</h3>
+                   <div className="flex bg-slate-800/50 p-1 rounded-xl">
+                      <button className="px-5 py-2 text-[10px] font-black uppercase tracking-widest bg-red-600 text-white rounded-lg">Active Ops</button>
+                      <button className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Archive</button>
+                   </div>
+                </div>
+
+                <div className="grid gap-10 lg:grid-cols-3">
+                   {/* Create Ad Form */}
+                   <div className="lg:col-span-2 rounded-[40px] bg-[#0a0a0a] border border-white/5 p-10 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-10 flex items-center gap-3">
+                         <Plus className="h-4 w-4" /> Construct New Ad Block
+                      </h4>
+                      <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); toast.success('Ad campaign initiated.'); }}>
+                         <div className="grid gap-8 md:grid-cols-2">
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Campaign Identity</label>
+                               <input placeholder="ENTER CAMPAIGN TITLE..." className="w-full rounded-2xl bg-white/5 border border-white/10 px-6 py-4 text-xs font-black uppercase tracking-widest text-white outline-none focus:border-red-600 transition-all" />
+                            </div>
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Placement Sector</label>
+                               <select className="w-full rounded-2xl bg-white/5 border border-white/10 px-6 py-4 text-xs font-black uppercase tracking-widest text-white outline-none">
+                                  <option>Homepage Hero</option><option>Event Sidebar</option><option>Global Footer</option>
+                               </select>
+                            </div>
+                            <div className="sm:col-span-2 space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Asset URL (Video/Image)</label>
+                               <div className="relative">
+                                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                                  <input placeholder="https://cdn.collegeconnect.com/..." className="w-full rounded-2xl bg-white/5 border border-white/10 pl-14 pr-6 py-4 text-xs font-black uppercase tracking-widest text-white outline-none focus:border-red-600 transition-all" />
+                               </div>
+                            </div>
+                         </div>
+                         <button className="w-full py-5 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-red-600/20 hover:bg-red-500 transition-all flex items-center justify-center gap-3 active:scale-95">
+                            <Send className="h-4 w-4" /> Execute Deployment
+                         </button>
+                      </form>
+                   </div>
+
+                   {/* Stats Sidebar */}
+                   <div className="space-y-8">
+                      <div className="rounded-[40px] bg-red-600 text-white p-10 shadow-2xl relative overflow-hidden group">
+                         <div className="absolute top-0 right-0 h-40 w-40 bg-white/20 rounded-full blur-[80px] -translate-y-20 translate-x-10" />
+                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-8">CTR Analytics</h4>
+                         <div className="space-y-6">
+                            {[
+                               { l: 'Total Reach', v: '2.4M' },
+                               { l: 'Ad Views', v: '840K' },
+                               { l: 'Engagement', v: '12.4%' },
+                            ].map(s => (
+                               <div key={s.l} className="flex justify-between items-center border-b border-white/20 pb-4 last:border-0 last:pb-0">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">{s.l}</span>
+                                  <span className="text-2xl font-black tabular-nums tracking-tighter">{s.v}</span>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                      <div className="rounded-[40px] bg-[#0a0a0a] border border-white/5 p-10">
+                         <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-8">Active Impressions</h4>
+                         <div className="h-32 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                               <AreaChart data={[{ x: 0, y: 10 }, { x: 1, y: 20 }, { x: 2, y: 15 }, { x: 3, y: 40 }]}>
+                                  <Area type="monotone" dataKey="y" stroke="#dc2626" fill="#dc262620" strokeWidth={3} />
+                               </AreaChart>
+                            </ResponsiveContainer>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          )}
+
         </main>
       </div>
     </div>

@@ -31,7 +31,8 @@ const CampusMap: React.FC<{ collegeId?: string }> = ({ collegeId }) => {
 
   const { data: mapData } = useQuery({
     queryKey: ['campus_map', collegeId],
-    queryFn: () => api.get(`/maps?collegeId=${collegeId}`).then(r => r.data).catch(() => null),
+    queryFn: () => api.get(`/maps/${collegeId}`).then(r => r.data).catch(() => null),
+    enabled: !!collegeId
   });
 
   const markers: MapMarker[] = [

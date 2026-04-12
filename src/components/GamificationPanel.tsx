@@ -7,11 +7,14 @@ import {
   Flame, Zap, Target, Crown
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 const GamificationPanel: React.FC = () => {
+  const { user } = useAuth();
   const { data: achievements = [], isLoading: loadingAch } = useQuery({
-    queryKey: ['user_achievements'],
-    queryFn: () => api.get('/winners/user').then(r => r.data).catch(() => []),
+    queryKey: ['user_achievements', user?.id],
+    queryFn: () => api.get(`/winners/user/${user?.id}`).then(r => r.data).catch(() => []),
+    enabled: !!user?.id
   });
 
   const { data: leaderboard = [], isLoading: loadingLead } = useQuery({

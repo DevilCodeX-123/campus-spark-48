@@ -140,9 +140,13 @@ const OrganizerHelperPanel: React.FC = () => {
                                    <span className="text-[10px] font-black uppercase text-emerald-500">Live</span>
                                 </div>
                                 <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-4">{e.title}</h4>
-                                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
                                    <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {e.venue || 'Block G'}</span>
                                    <span className="flex items-center gap-1.5"><UserCheck className="h-3.5 w-3.5" /> {94 + i*14} In</span>
+                                </div>
+                                <div className="flex gap-2">
+                                   <button onClick={() => toast.success('Status: Ongoing')} className="flex-1 py-3 bg-emerald-600/10 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">Ongoing</button>
+                                   <button onClick={() => toast.success('Status: Completed')} className="flex-1 py-3 bg-blue-600/10 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">End</button>
                                 </div>
                              </div>
                            ))}
